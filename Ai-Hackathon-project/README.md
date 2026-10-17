@@ -61,8 +61,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/aliabdullah-se/Ai-Hackathon-Project.git
-cd Ai-Hackathon-Project/Ai-Hackathon-project
+git clone https://github.com/aliabdullah-se/daymark.git
+cd daymark/Ai-Hackathon-project
 
 # Install dependencies
 npm install
