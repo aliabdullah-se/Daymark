@@ -1,0 +1,12 @@
+{
+  "name": "ai-hackathon-project-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root workspace proxy for Daymark digital morning newspaper",
+  "scripts": {
+    "dev": "npm --prefix Ai-Hackathon-project run dev",
+    "build": "npm --prefix Ai-Hackathon-project run build",
+    "start": "npm --prefix Ai-Hackathon-project run start",
+    "lint": "npm --prefix Ai-Hackathon-project run lint"
+  }
+}
