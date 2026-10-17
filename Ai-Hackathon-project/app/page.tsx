@@ -42,6 +42,7 @@ export default function MorningChroniclePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -299,6 +300,53 @@ export default function MorningChroniclePage() {
     showToast('Returned to Live Wire edition');
   };
 
+  // Clean up audio speech on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleToggleAudio = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      showToast('Audio dispatch is not supported in this browser.');
+      return;
+    }
+
+    if (isPlayingAudio) {
+      window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+      showToast('Audio dispatch stopped.');
+      return;
+    }
+
+    if (rankedArticles.length === 0) {
+      showToast('No articles available for audio briefing.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const topStories = rankedArticles.slice(0, 3);
+    const script = [
+      `Good morning, ${preferences.readerName || 'Reader'}. Welcome to your personalized edition of ${preferences.newspaperTitle || 'The Morning Chronicle'}.`,
+      `Here are your top reports for today.`,
+      ...topStories.map((art, idx) => `Report ${idx + 1}, from ${art.source.name}. ${art.title}. ${art.description}`),
+      `This concludes your morning audio dispatch. Have a productive day.`
+    ].join(' ');
+
+    const utterance = new SpeechSynthesisUtterance(script);
+    utterance.rate = 1.0;
+    utterance.onend = () => setIsPlayingAudio(false);
+    utterance.onerror = () => setIsPlayingAudio(false);
+
+    setIsPlayingAudio(true);
+    showToast('Playing Morning Audio Briefing...');
+    window.speechSynthesis.speak(utterance);
+  };
+
   // Print execution
   const executePrint = () => {
     window.print();
@@ -326,6 +374,8 @@ export default function MorningChroniclePage() {
         onSelectTopicFilter={setSelectedTopicFilter}
         onSaveCurrentEdition={handleSaveTodayEdition}
         savedEditionsCount={savedEditions.length}
+        isPlayingAudio={isPlayingAudio}
+        onToggleAudio={handleToggleAudio}
       />
 
       {/* Secondary Search & Filter Bar (Screen only) */}

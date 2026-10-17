@@ -6,15 +6,17 @@
 - **Credit Card / Payment Details**: None required or used at any point.
 - **News Data Ingestion**: 100% Free Public RSS Feeds (BBC News, The New York Times, Ars Technica, NPR News). No paid news APIs or subscriptions.
 - **AI / Personalization Engine**: 100% Free Transparent Rule-Based Ranking Engine (`lib/ranking.ts`). No paid OpenAI/Gemini/Anthropic tokens or API keys required.
+- **Audio Dispatch Engine**: 100% Free Native Browser Web Speech API (`SpeechSynthesis`). Zero external audio API costs or quotas.
 - **Database / Backend Storage**: 100% Free Browser `localStorage` (`lib/storage.ts`). No paid PostgreSQL, Supabase, Redis, or cloud storage instances.
-- **PDF Generation**: 100% Free Browser Native Print Engine (`@media print` in `globals.css`). No paid PDF generation services (Puppeteer SaaS, DocRaptor, etc.).
+- **PDF Generation**: 100% Free Browser Native Print Engine (`@media print` in `globals.css`). No paid PDF generation services.
 - **Hosting & Deployment**: 100% Free Vercel Hobby Tier (or Render/Netlify Free Tiers). No credit card required, free `*.vercel.app` subdomain.
 
 ## 2. Platform Free-Tier Limits & Mitigations
 | Service | Free Tier Limits | Mitigation / Status |
 | :--- | :--- | :--- |
 | **Public RSS Feeds** | Rate limiting if queried excessively per second | Server-side 5-minute caching (`next: { revalidate: 300 }`) and 6s timeout abort controller to prevent rate-limit bans |
-| **Vercel Hobby** | 100GB bandwidth/mo, 10s serverless function timeout, 100 deployment/day | Lightweight payload (<100KB), parallel RSS fetch finishes in ~600ms, well within all free limits |
+| **Web Speech API** | Browser-dependent voice synthesizers | Native client-side speech synthesis; runs fully local with 0 network or subscription overhead |
+| **Vercel Hobby** | 100GB bandwidth/mo, 10s serverless function timeout, 100 deployment/day | Lightweight payload (<104KB), parallel RSS fetch finishes in ~600ms, well within all free limits |
 | **Browser Storage** | ~5MB localStorage quota per domain | Compact JSON storage; saved editions capped at 20 snapshots; clippings store IDs and metadata |
 | **Browser Print** | Dependent on client browser PDF driver | Standardized CSS print broadsheet rules, explicit dialog instructions for "Save as PDF" |
 
@@ -46,10 +48,12 @@
    - Skip / Dismiss (✕) (removes article from today's paper).
    - Saved Clippings / Bookmarks (🔖) with quick filter toggle.
    - All state persisted locally in browser `localStorage`.
-6. **Morning Editions Archive** [VERIFIED]:
+6. **Native Web Speech Audio Briefing** [VERIFIED]:
+   - 1-click "Audio Brief" button in the masthead synthesizing a spoken morning dispatch of top ranked headlines using the browser's native Web Speech API at PKR 0 cost.
+7. **Morning Editions Archive** [VERIFIED]:
    - "Save Today" button snapshots today's edition.
    - Slide-over archive drawer to browse and read historical morning editions.
-7. **Clean Broadsheet PDF / Print** [VERIFIED]:
+8. **Clean Broadsheet PDF / Print** [VERIFIED]:
    - Dedicated print modal instructing users to select "Save as PDF".
    - `@media print` CSS engine formatting stories into broadsheet columns and hiding web UI buttons.
 
@@ -74,7 +78,8 @@
 - Milestones committed:
   - `34c7541`: Basic Structural Feature implementation (Core Next.js components, RSS aggregator, ranking engine, print engine)
   - `626dab8`: docs: add architecture diagrams, comprehensive README, and environment setup instructions
-  - `[Current]`: deploy: add zero-budget Vercel configuration and handover progress record
+  - `a4e0ace`: deploy: add zero-budget Vercel configuration and handover progress record
+  - `[Current]`: feat: add native Web Speech audio briefing dispatch and update progress record
 
 ## 6. Deployment Guide (PKR 0 Cost)
 ### Deploying to Vercel (Recommended):

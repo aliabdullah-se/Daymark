@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SlidersHorizontal, Printer, Archive, RotateCw, Sparkles, Sun, Newspaper } from 'lucide-react';
+import { SlidersHorizontal, Printer, Archive, RotateCw, Sparkles, Sun, Newspaper, Volume2, VolumeX } from 'lucide-react';
 import { UserPreferences, NewsTopic, AVAILABLE_TOPICS } from '@/types/news';
 
 interface MastheadProps {
@@ -15,6 +15,8 @@ interface MastheadProps {
   onSelectTopicFilter: (topic: NewsTopic | 'all') => void;
   onSaveCurrentEdition: () => void;
   savedEditionsCount: number;
+  isPlayingAudio?: boolean;
+  onToggleAudio?: () => void;
 }
 
 export default function Masthead({
@@ -28,6 +30,8 @@ export default function Masthead({
   onSelectTopicFilter,
   onSaveCurrentEdition,
   savedEditionsCount,
+  isPlayingAudio = false,
+  onToggleAudio,
 }: MastheadProps) {
   // Format current date in classic broadsheet style
   const today = new Date();
@@ -137,6 +141,26 @@ export default function Masthead({
 
           {/* Action Buttons */}
           <div className="flex items-center flex-wrap gap-2 text-xs font-sans">
+            {onToggleAudio && (
+              <button
+                id="btn-toggle-audio"
+                onClick={onToggleAudio}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded border transition-colors ${
+                  isPlayingAudio
+                    ? 'bg-editorial-crimson text-white border-editorial-crimson animate-pulse font-semibold'
+                    : 'bg-paper-100 hover:bg-paper-200 text-ink-800 border-paper-300'
+                }`}
+                title={isPlayingAudio ? 'Stop Audio Dispatch' : 'Listen to Morning Audio Dispatch (Web Speech)'}
+              >
+                {isPlayingAudio ? (
+                  <VolumeX className="w-3.5 h-3.5 text-white" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5 text-editorial-crimson" />
+                )}
+                <span>{isPlayingAudio ? 'Stop Dispatch' : 'Audio Brief'}</span>
+              </button>
+            )}
+
             <button
               id="btn-open-preferences"
               onClick={onOpenPreferences}
