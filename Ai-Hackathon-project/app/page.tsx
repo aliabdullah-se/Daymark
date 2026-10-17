@@ -24,8 +24,10 @@ import OnboardingModal from '@/components/OnboardingModal';
 import WhyThisModal from '@/components/WhyThisModal';
 import SavedEditionsDrawer from '@/components/SavedEditionsDrawer';
 import PrintPreviewModal from '@/components/PrintPreviewBanner';
+import GeminiKeyModal from '@/components/GeminiKeyModal';
 import { LoadingNewspaper, EmptyState, ErrorState } from '@/components/StatusStates';
-import { Sparkles, Bookmark, Search, RotateCcw, Clock, Quote, Printer, ShieldCheck, Compass, ExternalLink } from 'lucide-react';
+import { getGeminiApiKey, fetchGeminiTakeaways } from '@/lib/gemini';
+import { Sparkles, Bookmark, Search, RotateCcw, Clock, Quote, Printer, ShieldCheck, Compass, ExternalLink, BrainCircuit } from 'lucide-react';
 
 export default function MorningChroniclePage() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
@@ -48,6 +50,10 @@ export default function MorningChroniclePage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isGeminiModalOpen, setIsGeminiModalOpen] = useState(false);
+  const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const [aiTakeaways, setAiTakeaways] = useState<any[] | null>(null);
+  const [isAiTakeawaysLoading, setIsAiTakeawaysLoading] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -67,6 +73,7 @@ export default function MorningChroniclePage() {
     setFeedback(loadedFeedback);
     setSavedEditions(loadedEditions);
     setCurrentUser(user);
+    setHasGeminiKey(!!getGeminiApiKey());
 
     // If user has never onboarded, show onboarding prompt
     if (!loadedPrefs.onboarded) {
@@ -74,10 +81,45 @@ export default function MorningChroniclePage() {
     }
   }, []);
 
+  // Reactive sync with localStorage for user sessions & Gemini key
+  useEffect(() => {
+    const syncSession = () => {
+      setCurrentUser(getCurrentUser());
+      setPreferences(getStoredPreferences());
+      setHasGeminiKey(!!getGeminiApiKey());
+    };
+    window.addEventListener('storage', syncSession);
+    return () => window.removeEventListener('storage', syncSession);
+  }, []);
+
   const handleSignOut = () => {
     logoutUser();
     setCurrentUser(null);
     showToast('Signed out of subscriber account');
+  };
+
+  const handleSynthesizeWithGemini = async () => {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+      setIsGeminiModalOpen(true);
+      return;
+    }
+
+    setIsAiTakeawaysLoading(true);
+    showToast('Synthesizing with Google Gemini 1.5 Flash...');
+    try {
+      const res = await fetchGeminiTakeaways(rankedArticles, preferences);
+      if (res.success && Array.isArray(res.takeaways) && res.takeaways.length > 0) {
+        setAiTakeaways(res.takeaways);
+        showToast('Generated fresh executive takeaways via Gemini AI!');
+      } else {
+        showToast('Using algorithmic broadsheet synthesis');
+      }
+    } catch (e) {
+      showToast('AI synthesis unavailable, using broadsheet engine');
+    } finally {
+      setIsAiTakeawaysLoading(false);
+    }
   };
 
   // Fetch live articles from API
@@ -490,6 +532,8 @@ export default function MorningChroniclePage() {
         savedEditionsCount={savedEditions.length}
         isPlayingAudio={isPlayingAudio}
         onToggleAudio={handleToggleAudio}
+        onOpenGeminiKey={() => setIsGeminiModalOpen(true)}
+        hasGeminiKey={hasGeminiKey}
       />
 
       {/* Secondary Search & Filter Bar (Screen only) */}
@@ -567,22 +611,38 @@ export default function MorningChroniclePage() {
             {/* 1. TODAY'S 3 KEY TAKEAWAYS — THE MORNING BRIEFING BOX */}
             {keyTakeaways.length > 0 && selectedTopicFilter === 'all' && (
               <section className="mb-8 p-5 sm:p-6 bg-white border border-ivory-300 rounded shadow-2xs print-break-inside-avoid">
-                <div className="flex items-center justify-between border-b border-ivory-200 pb-3 mb-4">
+                <div className="flex items-center justify-between border-b border-ivory-200 pb-3 mb-4 flex-wrap gap-2">
                   <div className="flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-forest-600 animate-pulse" />
                     <span className="font-sans font-bold text-[11px] uppercase tracking-[0.25em] text-forest-700">
                       Executive Intelligence • 30-Second Morning Briefing
                     </span>
                   </div>
-                  <span className="text-xs font-serif italic text-charcoal-500 hidden sm:inline">
-                    Synthesized from today&apos;s top 3 ranked stories
-                  </span>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleSynthesizeWithGemini}
+                      disabled={isAiTakeawaysLoading}
+                      className="flex items-center space-x-1 px-2.5 py-1 rounded bg-forest-50 hover:bg-forest-100 text-forest-800 border border-forest-200 text-xs font-sans font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                      title={hasGeminiKey ? 'Synthesize with Google Gemini 1.5 Flash' : 'Configure Free Gemini AI Key'}
+                    >
+                      <Sparkles className={`w-3.5 h-3.5 text-forest-600 ${isAiTakeawaysLoading ? 'animate-spin' : ''}`} />
+                      <span>{isAiTakeawaysLoading ? 'Synthesizing...' : aiTakeaways ? 'Regenerate with Gemini' : 'Synthesize with Gemini AI'}</span>
+                    </button>
+                    {aiTakeaways && (
+                      <span className="text-[10px] bg-forest-100 text-forest-800 px-2 py-0.5 rounded font-mono font-medium">
+                        Gemini 1.5 Flash
+                      </span>
+                    )}
+                  </div>
                 </div>
+
                 <h2 className="font-headline text-2xl font-bold text-charcoal-900 mb-4">
                   Today&apos;s 3 Key Takeaways
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {keyTakeaways.map((item) => (
+                  {(aiTakeaways || keyTakeaways).map((item) => (
                     <div
                       key={item.number}
                       className="p-4 bg-ivory-50/80 border border-ivory-200 rounded flex flex-col justify-between"
@@ -917,6 +977,16 @@ export default function MorningChroniclePage() {
         onClose={() => setIsPrintModalOpen(false)}
         onConfirmPrint={executePrint}
         newspaperTitle={preferences.newspaperTitle}
+      />
+
+      {/* Gemini AI Key Configuration Modal */}
+      <GeminiKeyModal
+        isOpen={isGeminiModalOpen}
+        onClose={() => setIsGeminiModalOpen(false)}
+        onKeySaved={() => {
+          setHasGeminiKey(!!getGeminiApiKey());
+          showToast('Google Gemini API Key saved!');
+        }}
       />
     </div>
   );

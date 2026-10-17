@@ -93,22 +93,31 @@
   - `189eb43`: feat(ui): upgrade to Daymark editorial publication design with Tide and Reflecta styling
   - `7de9df5`: chore: add root package.json scripts to enable seamless execution from workspace root
   - `398eb88`: chore: update project and package names to daymark
-  - `[Current]`: feat(pages): add login, signup, archive, and learning profile pages
+  - `4e48a15`: feat(pages): add login, signup, archive, and learning profile pages
+  - `e520d3f`: docs(architecture): add ASCII and Mermaid system architecture diagram aligned with Eynvision criteria
+  - `[Current]`: feat(ai): integrate free Google Gemini AI keys, auto-login fallback, and UI configuration modal
 
-## 6. Deployment Guide (PKR 0 Cost)
+## 6. Gemini AI Integration (PKR 0 Cost)
+- **Model**: `gemini-1.5-flash` via Google Generative Language REST API (zero external SDKs).
+- **Key Source**: Free tier API key from Google AI Studio (`https://aistudio.google.com/app/apikey`).
+- **Capabilities**: AI executive synthesis for "Today's 3 Key Takeaways", editorial lens analysis in "Why this?" modal, and morning reflection quotes.
+- **Fail-Safe**: If no key is set or quota is exceeded, gracefully falls back to deterministic broadsheet algorithmic scoring.
+
+## 7. Deployment Guide (PKR 0 Cost)
 ### Deploying to Vercel (Recommended):
 1. Push your latest code to GitHub:
    ```bash
    git push origin main
    ```
 2. Go to [https://vercel.com/new](https://vercel.com/new) and log in with your GitHub account (No credit card required).
-3. Import the `daymark` repository.
+3. Import the `Ai-Hackathon-Project` (or `daymark`) repository.
 4. If prompted for **Root Directory**, select `Ai-Hackathon-project` (or let `vercel.json` handle it).
-5. Click **Deploy**. Vercel will build and assign a free production URL (e.g. `https://daymark-news.vercel.app`).
+5. (Optional) Add `GEMINI_API_KEY` under Environment Variables in Vercel settings.
+6. Click **Deploy**. Vercel will build and assign a free production URL (e.g. `https://daymark-news.vercel.app`).
 
-## 7. Next Highest-Priority Task
-- Submit the live deployment URL and GitHub repository link before the 8:00 PM hackathon deadline.
+## 8. Next Highest-Priority Task
+- Submit the live deployment URL, GitHub repository link, and Loom video before the deadline.
 
-## 8. Active Execution State
+## 9. Active Execution State
 - Production Server actively running on `http://localhost:3000`.
-- All routes verified and tested with automated browser testing.
+- All 10 routes compiled and verified: `/`, `/login`, `/signup`, `/onboarding`, `/archive`, `/profile`, `/api/ai/gemini`, `/api/news`.

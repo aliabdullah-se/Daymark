@@ -2,48 +2,51 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Newspaper, UserPlus, ArrowRight, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { getStoredUsers, saveStoredUser, setCurrentUser, getStoredPreferences, saveStoredPreferences, addLearningSignal } from '@/lib/storage';
+import { Newspaper, UserPlus, ArrowRight, Sparkles, AlertCircle, Check } from 'lucide-react';
+import {
+  getStoredUsers,
+  saveStoredUser,
+  setCurrentUser,
+  getStoredPreferences,
+  saveStoredPreferences,
+  addLearningSignal,
+} from '@/lib/storage';
 import { UserAccount } from '@/types/news';
 
 export default function SignupPage() {
-  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [paperTitle, setPaperTitle] = useState('THE MORNING CHRONICLE');
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleQuickFill = () => {
+    setFullName('Sarah Lin');
+    setEmail('sarah.lin@example.com');
+    setPassword('subscriber123');
+    setPaperTitle('THE LIN DISPATCH');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const cleanName = fullName.trim();
+    const cleanName = fullName.trim() || 'Subscriber';
     const cleanEmail = email.trim().toLowerCase();
     const cleanTitle = paperTitle.trim() || 'DAYMARK';
 
-    if (!cleanName) {
-      setError('Please provide your full name for the newspaper masthead.');
-      return;
-    }
     if (!cleanEmail || !cleanEmail.includes('@')) {
       setError('Please enter a valid subscriber email address.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 4) {
+      setError('Password must be at least 4 characters.');
       return;
     }
 
     setIsLoading(true);
-    const existingUsers = getStoredUsers();
-    if (existingUsers.some((u) => u.email.toLowerCase() === cleanEmail)) {
-      setError('A subscriber with this email already exists. Please sign in instead.');
-      setIsLoading(false);
-      return;
-    }
 
     const newUser: UserAccount = {
       id: `user-${Date.now()}`,
@@ -58,29 +61,30 @@ export default function SignupPage() {
     saveStoredUser(newUser);
     setCurrentUser(newUser);
 
-    // Seed default preferences for the new subscriber
+    // Sync preferences for new subscriber
     const currentPrefs = getStoredPreferences();
     saveStoredPreferences({
       ...currentPrefs,
       readerName: cleanName,
       newspaperTitle: cleanTitle.toUpperCase(),
-      onboarded: false, // will go to onboarding next
+      onboarded: false,
     });
 
-    // Record initial learning signal
     addLearningSignal({
       type: 'calibrate',
       articleTitle: `Subscription Initialized: ${cleanTitle.toUpperCase()}`,
-      impactDescription: `New broadsheet created for ${cleanName}. Redirecting to intellectual focus calibration.`,
+      impactDescription: `New broadsheet created for ${cleanName}. Proceeding to desk calibration.`,
     });
 
-    // Redirect to Onboarding
-    router.push('/onboarding');
+    setSuccessMsg(`Account created for ${cleanName}! Loading calibration desk...`);
+    setTimeout(() => {
+      window.location.href = '/onboarding';
+    }, 400);
   };
 
   return (
     <div className="min-h-screen bg-ivory-100 flex flex-col justify-between text-charcoal-900 font-sans selection:bg-forest-100 selection:text-forest-900">
-      {/* Editorial Top Border */}
+      {/* Top Hairline */}
       <div className="h-1.5 bg-forest-700 w-full" />
 
       {/* Header */}
@@ -92,22 +96,28 @@ export default function SignupPage() {
               DAYMARK
             </span>
           </Link>
-          <span className="text-xs font-serif italic text-charcoal-500 hidden sm:inline">
-            The Digital Morning Broadsheet
-          </span>
-          <Link
-            href="/login"
-            className="text-xs font-sans font-medium text-forest-700 hover:text-forest-900 transition-colors"
-          >
-            Already Subscribed? Sign In →
-          </Link>
+          <div className="flex items-center space-x-3 text-xs font-sans">
+            <Link
+              href="/"
+              className="text-charcoal-600 hover:text-charcoal-900 font-medium"
+            >
+              ← Back to Paper
+            </Link>
+            <span className="text-ivory-400">|</span>
+            <Link
+              href="/login"
+              className="font-semibold text-forest-700 hover:text-forest-900"
+            >
+              Already Subscribed? Sign In →
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Main Form Container */}
+      {/* Main Container */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-lg bg-white border border-ivory-300 rounded shadow-xs p-6 sm:p-8 relative">
-          {/* Masthead Banner */}
+          {/* Header */}
           <div className="text-center mb-6 border-b border-ivory-200 pb-5">
             <div className="inline-flex items-center space-x-1 text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-forest-700 mb-1.5">
               <UserPlus className="w-3.5 h-3.5" />
@@ -117,31 +127,34 @@ export default function SignupPage() {
               Subscribe to Your Morning Paper
             </h1>
             <p className="font-serif italic text-xs sm:text-sm text-charcoal-600 mt-1 max-w-md mx-auto">
-              Curate real, verified news delivered daily in an elegant, quiet broadsheet designed for deep thinkers.
+              Curate real, verified news delivered daily in an elegant, quiet broadsheet.
             </p>
           </div>
 
-          {/* Benefits Strip */}
-          <div className="grid grid-cols-3 gap-2 mb-6 bg-ivory-50 border border-ivory-200 rounded p-3 text-center text-[11px] font-sans text-charcoal-700">
-            <div>
-              <span className="font-bold block text-forest-800">PKR 0 Cost</span>
-              <span className="text-charcoal-500 font-serif italic">100% Free Forever</span>
-            </div>
-            <div className="border-x border-ivory-200">
-              <span className="font-bold block text-forest-800">Zero AI Jargon</span>
-              <span className="text-charcoal-500 font-serif italic">Real Verified Wire</span>
-            </div>
-            <div>
-              <span className="font-bold block text-forest-800">Local Privacy</span>
-              <span className="text-charcoal-500 font-serif italic">In-Browser Storage</span>
-            </div>
+          {/* Quick Demo Fill button */}
+          <div className="mb-5 flex justify-end">
+            <button
+              type="button"
+              onClick={handleQuickFill}
+              className="text-xs text-forest-700 hover:text-forest-900 underline font-medium flex items-center space-x-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Auto-fill Sample Subscriber Data</span>
+            </button>
           </div>
 
-          {/* Error Alert */}
+          {/* Alerts */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-start space-x-2">
               <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <span>{error}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-xs text-green-800 flex items-start space-x-2">
+              <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+              <span>{successMsg}</span>
             </div>
           )}
 
@@ -157,7 +170,7 @@ export default function SignupPage() {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Eleanor Vance"
+                placeholder="e.g. Sarah Lin"
                 className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans"
               />
             </div>
@@ -179,7 +192,7 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-xs font-sans font-semibold text-charcoal-700 uppercase tracking-wider mb-1">
-                Create Password
+                Password
               </label>
               <input
                 id="signup-password"
@@ -187,7 +200,7 @@ export default function SignupPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder="Create a password"
                 className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans"
               />
             </div>
@@ -206,7 +219,7 @@ export default function SignupPage() {
                 type="text"
                 value={paperTitle}
                 onChange={(e) => setPaperTitle(e.target.value)}
-                placeholder="e.g. THE MORNING CHRONICLE"
+                placeholder="e.g. THE LIN DISPATCH"
                 className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans uppercase tracking-wider font-semibold"
               />
             </div>
@@ -217,8 +230,7 @@ export default function SignupPage() {
               disabled={isLoading}
               className="w-full py-3 px-4 bg-forest-700 hover:bg-forest-800 text-white font-sans text-xs font-semibold rounded tracking-wide transition-all shadow-xs flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 mt-4"
             >
-              <span>{isLoading ? 'Setting Up Your Press...' : 'Continue to Personalize Focus Areas'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>{isLoading ? 'Setting Up Your Press...' : 'Subscribe & Calibrate Focus Desks →'}</span>
             </button>
           </form>
 
@@ -234,9 +246,9 @@ export default function SignupPage() {
         </div>
       </main>
 
-      {/* Editorial Colophon */}
+      {/* Footer */}
       <footer className="border-t border-ivory-300 py-4 bg-ivory-50 text-center text-[11px] font-sans text-charcoal-500">
-        <p>Daymark — Verified News Wire • 100% Client-Side Persistence • NaSCon &apos;26</p>
+        <p>Daymark — Verified News Wire • 100% Client-Side LocalStorage Auth • NaSCon &apos;26</p>
       </footer>
     </div>
   );

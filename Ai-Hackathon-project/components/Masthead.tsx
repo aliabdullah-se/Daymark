@@ -35,6 +35,8 @@ interface MastheadProps {
   savedEditionsCount: number;
   isPlayingAudio?: boolean;
   onToggleAudio?: () => void;
+  onOpenGeminiKey?: () => void;
+  hasGeminiKey?: boolean;
 }
 
 export default function Masthead({
@@ -52,6 +54,8 @@ export default function Masthead({
   savedEditionsCount,
   isPlayingAudio = false,
   onToggleAudio,
+  onOpenGeminiKey,
+  hasGeminiKey = false,
 }: MastheadProps) {
   const today = new Date();
   const dateFormatted = today.toLocaleDateString('en-US', {
@@ -87,28 +91,35 @@ export default function Masthead({
           </span>
         </div>
 
-        {/* Right: Personalized Greeting & Secondary Controls */}
-        <div className="flex items-center space-x-3 sm:space-x-4 mt-1 sm:mt-0">
+        {/* Right: Personalized Greeting, Auth & Secondary Controls */}
+        <div className="flex items-center space-x-2 sm:space-x-3 mt-1 sm:mt-0 flex-wrap gap-y-1">
           {/* User Authentication Status */}
           {currentUser ? (
-            <div className="flex items-center space-x-2 text-charcoal-700">
+            <div className="flex items-center space-x-1.5 text-charcoal-700">
               <span className="w-1.5 h-1.5 rounded-full bg-forest-500 animate-pulse" />
-              <span className="text-charcoal-500 font-sans hidden sm:inline">Signed in as</span>
               <span className="font-serif italic font-semibold text-charcoal-900">
                 {readerName}
               </span>
               <Link
                 href="/profile"
-                className="text-forest-700 hover:text-forest-900 text-[10px] font-sans font-semibold uppercase tracking-wider ml-1 hover:underline"
+                className="text-forest-700 hover:text-forest-900 text-[10px] font-sans font-semibold uppercase tracking-wider ml-0.5 hover:underline"
                 title="View recommendation weights & learning brain"
               >
                 (Brain)
+              </Link>
+              <span className="text-ivory-400">•</span>
+              <Link
+                href="/login"
+                className="text-charcoal-500 hover:text-charcoal-900 text-[10px] font-sans hover:underline"
+                title="Switch or Sign In to different account"
+              >
+                Switch
               </Link>
               {onSignOut && (
                 <button
                   type="button"
                   onClick={onSignOut}
-                  className="text-charcoal-400 hover:text-charcoal-800 p-0.5 ml-1 transition-colors"
+                  className="text-charcoal-400 hover:text-red-700 p-0.5 ml-0.5 transition-colors cursor-pointer"
                   title="Sign Out"
                 >
                   <LogOut className="w-3 h-3" />
@@ -119,7 +130,7 @@ export default function Masthead({
             <div className="flex items-center space-x-2 text-[11px]">
               <Link
                 href="/login"
-                className="text-forest-700 hover:text-forest-900 font-sans font-semibold hover:underline flex items-center space-x-0.5"
+                className="text-forest-800 hover:text-forest-950 font-sans font-bold hover:underline flex items-center space-x-0.5"
               >
                 <LogIn className="w-3 h-3" />
                 <span>Sign In</span>
@@ -132,6 +143,22 @@ export default function Masthead({
                 Subscribe
               </Link>
             </div>
+          )}
+
+          {/* Free Gemini AI Key Button */}
+          {onOpenGeminiKey && (
+            <button
+              onClick={onOpenGeminiKey}
+              className={`flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-sans transition-all cursor-pointer border ${
+                hasGeminiKey
+                  ? 'bg-forest-100 text-forest-900 border-forest-300 font-medium'
+                  : 'bg-ivory-200/90 hover:bg-forest-50 text-charcoal-700 border-ivory-300'
+              }`}
+              title="Configure Free Google Gemini API Key"
+            >
+              <Sparkles className="w-3 h-3 text-forest-600" />
+              <span>Gemini AI {hasGeminiKey ? 'Active' : 'Key'}</span>
+            </button>
           )}
 
           <div className="flex items-center space-x-2 no-print">
