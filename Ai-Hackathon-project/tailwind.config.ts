@@ -10,39 +10,46 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        serif: ["'Playfair Display'", "Georgia", "Cambria", "'Times New Roman'", "serif"],
+        serif: ["'Newsreader'", "'Playfair Display'", "Georgia", "'Times New Roman'", "serif"],
+        headline: ["'Playfair Display'", "'Newsreader'", "Georgia", "serif"],
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
         mono: ["'JetBrains Mono'", "Menlo", "Courier New", "monospace"],
-        headline: ["'Cinzel'", "'Playfair Display'", "Georgia", "serif"],
       },
       colors: {
-        paper: {
-          50: "#FCFBF7",
-          100: "#F7F4EB",
-          200: "#EFEADB",
-          300: "#E5DEC9",
-          800: "#24211D",
-          900: "#181614",
-          950: "#0F0E0C",
+        ivory: {
+          50: "#FAF9F5",
+          100: "#F7F5EF", // Canvas background
+          200: "#EFECE2",
+          300: "#E5DFD1", // Subtle dividers
+          400: "#D7CFBE",
+          500: "#C4BBA7",
         },
-        ink: {
-          900: "#121212",
-          800: "#242526",
-          700: "#383A3C",
-          600: "#525559",
-          500: "#71767C",
-          400: "#9DA3A9",
-          300: "#CBD0D6",
-          200: "#E2E5E9",
-          100: "#F1F3F5",
+        charcoal: {
+          950: "#141514",
+          900: "#20211F", // Primary typography
+          800: "#2E302D",
+          700: "#444742",
+          600: "#5D615B", // Secondary text
+          500: "#7C8079", // Muted metadata
+          400: "#9DA199",
+          300: "#C2C5BE",
+          200: "#E0E3DD",
         },
-        editorial: {
-          crimson: "#8B1E1E",
-          navy: "#1B365D",
-          amber: "#B45309",
-          olive: "#3D5A40",
-          gold: "#D97706",
-        }
+        forest: {
+          50: "#F2F6F3",
+          100: "#E4EDE6",
+          200: "#C9DBCF",
+          500: "#496653", // Primary accent
+          600: "#3D5545",
+          700: "#324538",
+          800: "#27362C",
+          900: "#1A251E",
+        },
+        terracotta: {
+          100: "#FBECE5",
+          500: "#B85D38",
+          600: "#9E4C2B",
+        },
       },
       screens: {
         'print': { 'raw': 'print' },

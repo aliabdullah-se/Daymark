@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SlidersHorizontal, Printer, Archive, RotateCw, Sparkles, Sun, Newspaper, Volume2, VolumeX } from 'lucide-react';
+import { SlidersHorizontal, Printer, Archive, RotateCw, Volume2, VolumeX, Sparkles, Tag, ArrowUpRight } from 'lucide-react';
 import { UserPreferences, NewsTopic, AVAILABLE_TOPICS } from '@/types/news';
 
 interface MastheadProps {
@@ -33,7 +33,6 @@ export default function Masthead({
   isPlayingAudio = false,
   onToggleAudio,
 }: MastheadProps) {
-  // Format current date in classic broadsheet style
   const today = new Date();
   const dateFormatted = today.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -41,183 +40,228 @@ export default function Masthead({
     day: 'numeric',
     year: 'numeric',
   });
+  const monthYearFormatted = today.toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+  }).toUpperCase();
+
+  const titleText = preferences.newspaperTitle || 'DAYMARK';
 
   return (
-    <header className="w-full pt-4 pb-2 border-b border-paper-300">
-      {/* Top Meta Line: Weather & Issue Tagline */}
-      <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between text-xs text-ink-600 font-sans uppercase tracking-wider pb-2 border-b border-paper-200">
+    <header className="w-full bg-ivory-100 border-b border-ivory-300">
+      {/* 1. TOP UTILITY STRIP */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between text-[11px] font-sans tracking-wider text-charcoal-600 border-b border-ivory-200">
+        {/* Left: Volume & Issue Info */}
         <div className="flex items-center space-x-3">
-          <span className="flex items-center text-amber-800 font-medium">
-            <Sun className="w-3.5 h-3.5 mr-1" />
-            68°F • Crisp Morning
+          <span className="font-semibold text-charcoal-900 tracking-widest">
+            VOL. XII / NO. 42
           </span>
-          <span className="text-paper-300">|</span>
-          <span>Vol. CXXVI — No. 42</span>
-          <span className="text-paper-300">|</span>
-          <span className="text-editorial-navy font-semibold">Late City Edition</span>
-        </div>
-
-        <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-          <span className="text-ink-500">Edition Prepared For:</span>
-          <span className="font-semibold text-ink-900 border-b border-dotted border-ink-600">
-            {preferences.readerName || 'Distinguished Reader'}
+          <span className="text-ivory-400">•</span>
+          <span className="uppercase text-charcoal-600">
+            {monthYearFormatted}
           </span>
-          <span className="bg-editorial-crimson text-white px-1.5 py-0.5 rounded text-[10px] font-bold tracking-normal">
-            LIVE WIRE
+          <span className="hidden sm:inline text-ivory-400">•</span>
+          <span className="hidden sm:inline text-charcoal-500 font-serif italic lowercase">
+            {dateFormatted}
           </span>
         </div>
-      </div>
 
-      {/* Main Newspaper Masthead Title */}
-      <div className="max-w-7xl mx-auto px-4 py-4 text-center">
-        <div className="flex items-center justify-center space-x-4 mb-1">
-          <div className="hidden md:block h-px bg-ink-900 flex-1 max-w-[120px]"></div>
-          <span className="text-[11px] font-serif uppercase tracking-[0.25em] text-ink-700 italic">
-            Veritas et Sapientia • Curated Global Intelligence
-          </span>
-          <div className="hidden md:block h-px bg-ink-900 flex-1 max-w-[120px]"></div>
-        </div>
-
-        <h1 
-          id="newspaper-main-title" 
-          className="font-headline text-3xl sm:text-5xl md:text-6xl font-black text-ink-900 tracking-tight cursor-pointer hover:opacity-95 transition-opacity"
-          onClick={onOpenPreferences}
-          title="Click to customize newspaper name and preferences"
-        >
-          {preferences.newspaperTitle || 'THE MORNING CHRONICLE'}
-        </h1>
-
-        <p className="mt-1 text-xs md:text-sm font-serif italic text-ink-600">
-          Personalized Digital Morning Broadsheet • Issue of {dateFormatted}
-        </p>
-      </div>
-
-      {/* Classic Double Rules */}
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="newspaper-rule-double my-1"></div>
-      </div>
-
-      {/* Controls & Topic Bar (Hidden on print) */}
-      <div className="max-w-7xl mx-auto px-4 py-2 no-print">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
-          
-          {/* Section Navigation Tabs */}
-          <nav className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-xs font-sans font-medium" aria-label="Section Navigation">
+        {/* Right: Personalized Greeting & Secondary Controls */}
+        <div className="flex items-center space-x-4 mt-1 sm:mt-0">
+          <div className="flex items-center space-x-1.5 text-charcoal-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-forest-500 animate-pulse" />
+            <span className="text-charcoal-500 font-sans">Curated for</span>
             <button
-              id="filter-all-topics"
-              onClick={() => onSelectTopicFilter('all')}
-              className={`px-3 py-1 rounded transition-colors ${
-                selectedTopicFilter === 'all'
-                  ? 'bg-ink-900 text-white font-semibold shadow-sm'
-                  : 'bg-paper-100 text-ink-700 hover:bg-paper-200'
-              }`}
+              onClick={onOpenPreferences}
+              className="font-serif italic font-semibold text-charcoal-900 hover:text-forest-600 transition-colors underline decoration-ivory-300 underline-offset-2"
+              title="Click to personalize name and topics"
             >
-              Front Page (All)
+              {preferences.readerName || 'Reader'}
             </button>
-            {AVAILABLE_TOPICS.map((t) => {
-              const isSelected = selectedTopicFilter === t.id;
-              const isUserInterested = preferences.selectedTopics.includes(t.id);
-              return (
-                <button
-                  key={t.id}
-                  id={`filter-${t.id}`}
-                  onClick={() => onSelectTopicFilter(t.id)}
-                  className={`px-2.5 py-1 rounded transition-colors flex items-center space-x-1 ${
-                    isSelected
-                      ? 'bg-ink-900 text-white font-semibold shadow-sm'
-                      : isUserInterested
-                      ? 'bg-paper-200 text-ink-900 hover:bg-paper-300 font-medium'
-                      : 'bg-paper-100 text-ink-500 hover:bg-paper-200'
-                  }`}
-                >
-                  <span>{t.label}</span>
-                  {isUserInterested && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-editorial-crimson" title="In your preferences" />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center flex-wrap gap-2 text-xs font-sans">
+          <div className="flex items-center space-x-2 no-print">
             {onToggleAudio && (
               <button
                 id="btn-toggle-audio"
                 onClick={onToggleAudio}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded border transition-colors ${
+                className={`flex items-center space-x-1 px-2.5 py-1 rounded text-[11px] font-sans transition-all ${
                   isPlayingAudio
-                    ? 'bg-editorial-crimson text-white border-editorial-crimson animate-pulse font-semibold'
-                    : 'bg-paper-100 hover:bg-paper-200 text-ink-800 border-paper-300'
+                    ? 'bg-forest-600 text-white font-medium shadow-xs'
+                    : 'bg-ivory-200/80 hover:bg-ivory-200 text-charcoal-800'
                 }`}
-                title={isPlayingAudio ? 'Stop Audio Dispatch' : 'Listen to Morning Audio Dispatch (Web Speech)'}
+                title={isPlayingAudio ? 'Pause Audio Brief' : 'Play Audio Brief (Web Speech)'}
               >
                 {isPlayingAudio ? (
-                  <VolumeX className="w-3.5 h-3.5 text-white" />
+                  <VolumeX className="w-3 h-3 text-white" />
                 ) : (
-                  <Volume2 className="w-3.5 h-3.5 text-editorial-crimson" />
+                  <Volume2 className="w-3 h-3 text-forest-600" />
                 )}
-                <span>{isPlayingAudio ? 'Stop Dispatch' : 'Audio Brief'}</span>
+                <span>{isPlayingAudio ? 'Listening...' : 'Audio Brief'}</span>
               </button>
             )}
 
             <button
-              id="btn-open-preferences"
-              onClick={onOpenPreferences}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-paper-100 hover:bg-paper-200 text-ink-800 rounded border border-paper-300 transition-colors font-medium"
-              title="Change news topics and custom interests"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-editorial-navy" />
-              <span>Preferences</span>
-            </button>
-
-            <button
-              id="btn-refresh-wire"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-paper-100 hover:bg-paper-200 text-ink-800 rounded border border-paper-300 transition-colors disabled:opacity-50"
-              title="Fetch latest updates from RSS feeds"
-            >
-              <RotateCw className={`w-3.5 h-3.5 text-ink-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Updating...' : 'Sync Wire'}</span>
-            </button>
-
-            <button
-              id="btn-save-today-edition"
-              onClick={onSaveCurrentEdition}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-paper-100 hover:bg-paper-200 text-ink-800 rounded border border-paper-300 transition-colors"
-              title="Save today's edition to personal archive"
-            >
-              <Newspaper className="w-3.5 h-3.5 text-editorial-amber" />
-              <span>Save Today</span>
-            </button>
-
-            <button
-              id="btn-open-editions-archive"
-              onClick={onOpenEditions}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-paper-100 hover:bg-paper-200 text-ink-800 rounded border border-paper-300 transition-colors"
-              title="Browse past saved editions"
-            >
-              <Archive className="w-3.5 h-3.5 text-ink-600" />
-              <span>Archive ({savedEditionsCount})</span>
-            </button>
-
-            <button
               id="btn-print-newspaper"
               onClick={onPrint}
-              className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-ink-900 hover:bg-black text-white rounded shadow-sm transition-all font-medium"
-              title="Download clean newspaper PDF via browser print"
+              className="flex items-center space-x-1 px-3 py-1 bg-charcoal-900 hover:bg-charcoal-800 text-ivory-50 rounded text-[11px] font-medium transition-all shadow-xs"
+              title="Save as PDF or Print"
             >
-              <Printer className="w-3.5 h-3.5 text-amber-300" />
-              <span>Print / Save PDF</span>
+              <Printer className="w-3 h-3 text-ivory-300" />
+              <span>Print / PDF</span>
             </button>
           </div>
-
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="newspaper-rule-single my-1"></div>
+      {/* 2. GRAND MASTHEAD */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8 text-center relative">
+        <div className="inline-block cursor-pointer group" onClick={onOpenPreferences} title="Click to customize title">
+          <h1
+            id="newspaper-main-title"
+            className="font-headline text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-charcoal-900 tracking-[-0.03em] leading-none transition-colors group-hover:text-forest-700"
+          >
+            {titleText}
+          </h1>
+          <p className="font-serif italic text-sm sm:text-base md:text-lg text-charcoal-600 mt-2 tracking-normal">
+            Your world, clearly delivered.
+          </p>
+        </div>
+      </div>
+
+      {/* 3. SECTION NAVIGATION BAR (Editorial Hairlines) */}
+      <div className="border-t border-b border-charcoal-900/10 bg-ivory-50/50 no-print">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between py-2 gap-2">
+            {/* Section Links */}
+            <nav className="flex items-center flex-wrap justify-center gap-x-5 gap-y-1.5 text-xs font-sans tracking-wider uppercase font-medium">
+              <button
+                id="filter-all-topics"
+                onClick={() => onSelectTopicFilter('all')}
+                className={`py-1 transition-all relative ${
+                  selectedTopicFilter === 'all'
+                    ? 'text-charcoal-900 font-bold border-b-2 border-forest-600 pb-0.5'
+                    : 'text-charcoal-500 hover:text-charcoal-900'
+                }`}
+              >
+                Cover & Front Page
+              </button>
+              {AVAILABLE_TOPICS.map((t) => {
+                const isSelected = selectedTopicFilter === t.id;
+                const isUserTopic = preferences.selectedTopics.includes(t.id);
+                return (
+                  <button
+                    key={t.id}
+                    id={`filter-${t.id}`}
+                    onClick={() => onSelectTopicFilter(t.id)}
+                    className={`py-1 transition-all relative flex items-center space-x-1 ${
+                      isSelected
+                        ? 'text-charcoal-900 font-bold border-b-2 border-forest-600 pb-0.5'
+                        : isUserTopic
+                        ? 'text-charcoal-800 hover:text-charcoal-900 font-medium'
+                        : 'text-charcoal-400 hover:text-charcoal-700'
+                    }`}
+                  >
+                    <span>{t.label.split(' ')[0]}</span>
+                    {isUserTopic && (
+                      <span className="w-1 h-1 rounded-full bg-forest-600" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Quick Action Tools */}
+            <div className="flex items-center space-x-3 text-xs font-sans text-charcoal-600">
+              <button
+                id="btn-refresh-wire"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="flex items-center space-x-1 hover:text-charcoal-900 transition-colors disabled:opacity-50"
+                title="Sync live wire"
+              >
+                <RotateCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-forest-600' : ''}`} />
+                <span>{isRefreshing ? 'Syncing...' : 'Sync Wire'}</span>
+              </button>
+
+              <span className="text-ivory-400">|</span>
+
+              <button
+                id="btn-save-today-edition"
+                onClick={onSaveCurrentEdition}
+                className="hover:text-charcoal-900 transition-colors"
+                title="Archive today's edition snapshot"
+              >
+                Save Issue
+              </button>
+
+              <span className="text-ivory-400">|</span>
+
+              <button
+                id="btn-open-editions-archive"
+                onClick={onOpenEditions}
+                className="hover:text-charcoal-900 transition-colors"
+                title="View past editions"
+              >
+                Archive ({savedEditionsCount})
+              </button>
+
+              <span className="text-ivory-400">|</span>
+
+              <button
+                id="btn-open-preferences"
+                onClick={onOpenPreferences}
+                className="flex items-center space-x-1 hover:text-charcoal-900 transition-colors text-forest-700 font-medium"
+                title="Edit reading preferences"
+              >
+                <SlidersHorizontal className="w-3 h-3" />
+                <span>Curate</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. ACTIVE PERSONALIZED LENSES STRIP */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between text-xs font-sans text-charcoal-600 border-b border-ivory-200/80 no-print">
+        <div className="flex items-center flex-wrap gap-2">
+          <span className="text-[11px] font-medium text-charcoal-500 uppercase tracking-wider flex items-center">
+            <Sparkles className="w-3 h-3 text-forest-600 mr-1" />
+            Curated Lenses:
+          </span>
+          {preferences.selectedTopics.map((topicId) => {
+            const meta = AVAILABLE_TOPICS.find((t) => t.id === topicId);
+            return (
+              <span
+                key={topicId}
+                className="inline-flex items-center px-2 py-0.5 rounded-full bg-forest-50 text-forest-700 text-[11px] font-medium border border-forest-100"
+              >
+                {meta ? meta.label : topicId}
+              </span>
+            );
+          })}
+          {preferences.customInterests.slice(0, 3).map((interest) => (
+            <span
+              key={interest}
+              className="inline-flex items-center px-2 py-0.5 rounded-full bg-ivory-200 text-charcoal-800 text-[11px] font-serif italic border border-ivory-300"
+            >
+              #{interest}
+            </span>
+          ))}
+          {preferences.customInterests.length > 3 && (
+            <span className="text-[10px] text-charcoal-400 font-sans">
+              +{preferences.customInterests.length - 3} more
+            </span>
+          )}
+        </div>
+
+        <button
+          onClick={onOpenPreferences}
+          className="text-[11px] text-charcoal-500 hover:text-forest-700 font-sans font-medium transition-colors hidden sm:inline-flex items-center space-x-0.5"
+        >
+          <span>Adjust Lenses</span>
+          <ArrowUpRight className="w-3 h-3" />
+        </button>
       </div>
     </header>
   );

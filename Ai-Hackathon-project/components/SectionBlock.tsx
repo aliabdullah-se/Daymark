@@ -34,20 +34,20 @@ export default function SectionBlock({
   if (articles.length === 0) return null;
 
   return (
-    <section className="my-8 print-break-inside-avoid">
+    <section className="my-10 print-break-inside-avoid">
       {/* Section Header Rule */}
-      <div className="flex items-center space-x-3 mb-4">
-        <span className="font-headline font-black text-xs uppercase tracking-widest text-editorial-crimson bg-paper-200 px-2 py-0.5 rounded border border-paper-300">
+      <div className="flex items-center space-x-3 mb-5">
+        <span className="font-sans font-bold text-[10px] uppercase tracking-[0.25em] text-forest-700 bg-forest-50 px-2 py-0.5 rounded border border-forest-100">
           {sectionCode}
         </span>
-        <h3 className="font-headline text-lg sm:text-xl font-bold uppercase tracking-wider text-ink-900">
+        <h3 className="font-headline text-xl sm:text-2xl font-bold tracking-tight text-charcoal-900">
           {title}
         </h3>
-        <div className="flex-1 h-px bg-ink-900"></div>
+        <div className="flex-1 h-px bg-ivory-300"></div>
       </div>
 
       {/* Grid of Section Articles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {articles.map((article) => (
           <ArticleCard
             key={article.id}

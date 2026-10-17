@@ -76,11 +76,11 @@ export const AVAILABLE_TOPICS: TopicMeta[] = [
 ];
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
-  readerName: 'Morning Reader',
-  newspaperTitle: 'THE MORNING CHRONICLE',
+  readerName: 'Reader',
+  newspaperTitle: 'DAYMARK',
   selectedTopics: ['technology', 'world', 'business', 'science'],
   customInterests: ['Artificial Intelligence', 'Space Exploration', 'Clean Energy'],
   readingPace: 'standard',
   onboarded: false,
-  theme: 'vintage',
+  theme: 'modern',
 };

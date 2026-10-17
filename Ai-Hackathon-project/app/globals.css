@@ -1,59 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500;1,6..72,600;1,6..72,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --paper-bg: #FAF7F0;
-  --paper-card: #FFFFFF;
-  --ink-primary: #121212;
-  --ink-secondary: #4A4A4A;
-  --ink-muted: #737373;
-  --rule-color: #262626;
-  --rule-light: #E5E0D4;
+  --bg-ivory: #F7F5EF;
+  --text-charcoal: #20211F;
+  --accent-forest: #496653;
+  --border-rule: #E5DFD1;
+  --border-dark: #20211F;
 }
 
 body {
-  background-color: var(--paper-bg);
-  color: var(--ink-primary);
+  background-color: var(--bg-ivory);
+  color: var(--text-charcoal);
   font-family: 'Newsreader', Georgia, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Authentic Newspaper Double Rules */
-.newspaper-rule-double {
-  border-top: 3px solid var(--rule-color);
-  border-bottom: 1px solid var(--rule-color);
-  height: 6px;
+/* Daymark Editorial Dividers */
+.daymark-rule-thin {
+  border-top: 1px solid var(--border-rule);
 }
 
-.newspaper-rule-double-thin {
-  border-top: 1px solid var(--rule-color);
-  border-bottom: 1px solid var(--rule-color);
+.daymark-rule-dark {
+  border-top: 1px solid var(--border-dark);
+}
+
+.daymark-rule-double {
+  border-top: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
   height: 4px;
 }
 
-.newspaper-rule-single {
-  border-top: 1px solid var(--rule-color);
+.daymark-rule-hairline {
+  border-top: 1px solid rgba(32, 33, 31, 0.12);
 }
 
-.newspaper-rule-muted {
-  border-top: 1px solid var(--rule-light);
-}
-
-/* Drop Cap */
+/* Editorial Dropcap */
 .editorial-dropcap::first-letter {
   float: left;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 3.4rem;
+  font-size: 3.8rem;
   line-height: 0.8;
   padding-top: 4px;
-  padding-right: 8px;
+  padding-right: 10px;
   padding-bottom: 2px;
   font-weight: 700;
-  color: #121212;
+  color: #20211F;
 }
 
 /* Custom Scrollbars */
@@ -63,16 +59,22 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F4EFE6;
+  background: #F7F5EF;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C4BCAB;
+  background: #D5CDBC;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #968D7B;
+  background: #B8B09F;
+}
+
+/* Selection */
+::selection {
+  background-color: #E4EDE6;
+  color: #1A251E;
 }
 
 /* Print Specific Rules for Clean Broadsheet Export */
@@ -85,7 +87,7 @@ body {
   body {
     background-color: #FFFFFF !important;
     color: #000000 !important;
-    font-size: 11pt !important;
+    font-size: 10.5pt !important;
   }
 
   .no-print,
@@ -120,12 +122,5 @@ body {
   a {
     text-decoration: none !important;
     color: inherit !important;
-  }
-
-  /* Broadsheet columns */
-  .print-columns {
-    column-count: 2 !important;
-    column-gap: 20px !important;
-    column-rule: 1px solid #D1D5DB !important;
   }
 }

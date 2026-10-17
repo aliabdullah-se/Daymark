@@ -353,11 +353,11 @@ export default function MorningChroniclePage() {
   };
 
   return (
-    <div className="min-h-screen bg-paper-50 text-ink-900 flex flex-col font-serif selection:bg-amber-200">
+    <div className="min-h-screen bg-ivory-100 text-charcoal-900 flex flex-col font-serif selection:bg-forest-100 selection:text-forest-900">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-ink-900 text-white text-xs font-sans px-4 py-2.5 rounded shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-2 no-print">
-          <Sparkles className="w-4 h-4 text-amber-300" />
+        <div className="fixed bottom-6 right-6 z-50 bg-charcoal-900 text-ivory-50 text-xs font-sans px-4 py-2.5 rounded shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-2 no-print border border-charcoal-700">
+          <Sparkles className="w-3.5 h-3.5 text-forest-300" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -379,23 +379,23 @@ export default function MorningChroniclePage() {
       />
 
       {/* Secondary Search & Filter Bar (Screen only) */}
-      <div className="max-w-7xl mx-auto px-4 w-full py-2.5 no-print">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-paper-100 p-2.5 rounded border border-paper-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full py-2.5 no-print">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-ivory-200/50 p-2.5 rounded border border-ivory-300">
           {/* Search Box */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-3.5 h-3.5 text-ink-400 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-charcoal-400 absolute left-3 top-2.5" />
             <input
               id="search-articles-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter stories by topic or keyword..."
-              className="w-full pl-8 pr-3 py-1.5 bg-white border border-paper-300 rounded text-xs font-sans text-ink-900 focus:outline-none focus:ring-1 focus:ring-ink-900"
+              placeholder="Filter stories by subject or keyword..."
+              className="w-full pl-8 pr-3 py-1.5 bg-ivory-50 border border-ivory-300 rounded text-xs font-sans text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:ring-1 focus:ring-forest-600"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-2 text-ink-400 hover:text-ink-900 text-xs"
+                className="absolute right-2.5 top-2 text-charcoal-400 hover:text-charcoal-900 text-xs"
               >
                 ×
               </button>
@@ -408,25 +408,25 @@ export default function MorningChroniclePage() {
               onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
               className={`flex items-center space-x-1.5 px-3 py-1 rounded border transition-colors ${
                 showBookmarksOnly
-                  ? 'bg-amber-100 border-amber-300 text-amber-900 font-semibold'
-                  : 'bg-white border-paper-300 text-ink-700 hover:bg-paper-200'
+                  ? 'bg-forest-50 border-forest-300 text-forest-800 font-semibold'
+                  : 'bg-ivory-50 border-ivory-300 text-charcoal-700 hover:bg-ivory-200'
               }`}
             >
-              <Bookmark className="w-3.5 h-3.5 text-editorial-amber" />
+              <Bookmark className="w-3.5 h-3.5 text-forest-600" />
               <span>Saved Clippings ({feedback.savedArticleIds.length})</span>
             </button>
 
             {activeEdition && (
               <button
                 onClick={handleResetToLive}
-                className="flex items-center space-x-1 px-2.5 py-1 bg-paper-200 text-editorial-crimson rounded hover:bg-paper-300 font-medium"
+                className="flex items-center space-x-1 px-2.5 py-1 bg-forest-50 text-forest-700 border border-forest-200 rounded hover:bg-forest-100 font-medium"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Exit Archive</span>
               </button>
             )}
 
-            <span className="text-ink-500 hidden md:inline">
+            <span className="text-charcoal-500 hidden md:inline">
               Showing <strong>{rankedArticles.length}</strong> curated reports
             </span>
           </div>
@@ -434,7 +434,7 @@ export default function MorningChroniclePage() {
       </div>
 
       {/* Main Content Broadsheet */}
-      <main className="max-w-7xl mx-auto px-4 w-full flex-1 py-4 print-broadsheet">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 w-full flex-1 py-4 print-broadsheet">
         {isLoading ? (
           <LoadingNewspaper />
         ) : error ? (
@@ -451,10 +451,10 @@ export default function MorningChroniclePage() {
         ) : (
           <div>
             {/* FRONT PAGE BROADSHEET LAYOUT */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b-2 border-ink-900">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b border-ivory-300">
               
               {/* PRIMARY BROADSHEET COLUMN (Cols 1-8) */}
-              <div className="lg:col-span-8 lg:border-r lg:border-paper-300 lg:pr-8">
+              <div className="lg:col-span-8 lg:border-r lg:border-ivory-300 lg:pr-8">
                 {/* 1. Lead Story */}
                 {leadArticle && (
                   <ArticleCard
@@ -474,11 +474,11 @@ export default function MorningChroniclePage() {
                 {/* 2. Secondary Stories (2-column layout above the fold) */}
                 {secondaryArticles.length > 0 && (
                   <div>
-                    <div className="flex items-center space-x-2 mb-3">
-                      <span className="font-headline font-bold text-[11px] uppercase tracking-wider text-ink-700">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <span className="font-sans font-bold text-[10px] uppercase tracking-[0.2em] text-forest-700">
                         Front Page Reports
                       </span>
-                      <div className="flex-1 h-px bg-paper-300"></div>
+                      <div className="flex-1 h-px bg-ivory-300"></div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       {secondaryArticles.map((article) => (
@@ -505,16 +505,16 @@ export default function MorningChroniclePage() {
               <div className="lg:col-span-4 flex flex-col justify-between space-y-6">
                 <div>
                   {/* The Wire Header */}
-                  <div className="p-3 bg-paper-200 border-2 border-ink-900 rounded mb-4">
+                  <div className="p-3.5 bg-ivory-200/60 border border-ivory-300 rounded mb-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-headline font-black text-sm uppercase tracking-widest text-ink-900">
+                      <h3 className="font-headline font-bold text-sm tracking-wider uppercase text-charcoal-900">
                         The Morning Wire
                       </h3>
-                      <span className="text-[10px] font-mono bg-editorial-crimson text-white px-1.5 py-0.5 rounded font-bold">
+                      <span className="text-[10px] font-sans font-semibold bg-forest-600 text-white px-1.5 py-0.5 rounded">
                         FAST DISPATCH
                       </span>
                     </div>
-                    <p className="text-[11px] font-serif text-ink-600 mt-1 italic">
+                    <p className="text-[11px] font-serif italic text-charcoal-600 mt-1">
                       High-priority 2-minute developments filtered for your reading pace.
                     </p>
                   </div>
@@ -539,13 +539,19 @@ export default function MorningChroniclePage() {
                   </div>
                 </div>
 
-                {/* Editorial Quote of the Day & Reader Note */}
-                <div className="p-4 bg-paper-100 border border-paper-300 rounded font-serif text-xs text-ink-700 italic border-l-4 border-l-editorial-navy">
-                  <div className="flex items-center space-x-1.5 font-sans font-bold uppercase text-[10px] text-editorial-navy not-italic mb-1">
-                    <Quote className="w-3 h-3" />
-                    <span>Editorial Thought</span>
+                {/* Editorial Reflection Box (Inspired by Reference Image 2: REFLECTA) */}
+                <div className="p-5 bg-ivory-50 border border-ivory-300 rounded-lg font-serif text-charcoal-700 border-l-4 border-l-forest-600 shadow-2xs">
+                  <div className="flex items-center space-x-1.5 font-sans font-semibold uppercase text-[10px] tracking-wider text-forest-700 mb-2">
+                    <Quote className="w-3.5 h-3.5" />
+                    <span>Daily Reflection</span>
                   </div>
-                  &ldquo;An authentic newspaper is not merely a recorder of events, but a lens through which an informed citizen discovers what truly matters.&rdquo;
+                  <p className="text-sm sm:text-base italic leading-relaxed text-charcoal-800">
+                    &ldquo;Knowledge becomes wisdom when connected with curiosity.&rdquo;
+                  </p>
+                  <div className="mt-3 pt-2.5 border-t border-ivory-200 flex items-center justify-between text-[11px] font-sans text-charcoal-500">
+                    <span>Daymark Editorial Desk</span>
+                    <span className="font-mono text-[10px]">Issue No. 42</span>
+                  </div>
                 </div>
               </div>
 
@@ -636,33 +642,31 @@ export default function MorningChroniclePage() {
         )}
       </main>
 
-      {/* NEWSPAPER COLOPHON & FOOTER */}
-      <footer className="w-full bg-paper-100 border-t-2 border-ink-900 py-8 mt-12 print-header">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="newspaper-rule-double-thin my-2"></div>
-
-          <h4 className="font-headline text-lg font-black text-ink-900 tracking-wider">
-            {preferences.newspaperTitle || 'THE MORNING CHRONICLE'}
+      {/* DAYMARK COLOPHON & FOOTER */}
+      <footer className="w-full bg-ivory-200/50 border-t border-ivory-300 py-10 mt-16 print-header">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+          <h4 className="font-headline text-2xl font-black text-charcoal-900 tracking-tight">
+            {preferences.newspaperTitle || 'DAYMARK'}
           </h4>
-          <p className="text-xs font-serif text-ink-600 mt-1 max-w-xl mx-auto leading-relaxed">
-            Published daily for {preferences.readerName || 'our readers'} • Aggregated and verified via authentic RSS news wires (BBC News, The New York Times, Ars Technica, and NPR).
+          <p className="text-xs font-serif italic text-charcoal-600 mt-1 max-w-lg mx-auto leading-relaxed">
+            Your world, clearly delivered. Personalized daily for {preferences.readerName || 'our readers'} • Sourced from BBC News, The New York Times, Ars Technica, and NPR.
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-[11px] font-sans text-ink-500 uppercase tracking-wider">
-            <span className="flex items-center">
-              <ShieldCheck className="w-3.5 h-3.5 text-editorial-olive mr-1" />
-              NaSCon &apos;26 AI Challenge Entry
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-[11px] font-sans text-charcoal-500 uppercase tracking-wider">
+            <span className="flex items-center text-forest-700 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-forest-600 mr-1" />
+              NaSCon &apos;26 Official Entry
             </span>
             <span>•</span>
             <span>Zero Hallucination Policy</span>
             <span>•</span>
             <span>Deterministic Scoring Algorithm</span>
             <span>•</span>
-            <span>Client-side Storage Enabled</span>
+            <span>100% Client-Side Storage</span>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-paper-200 text-[10px] text-ink-400 font-mono no-print">
-            Press &ldquo;Print / Save PDF&rdquo; anytime to produce an archival-grade physical or digital broadsheet edition.
+          <div className="mt-4 pt-4 border-t border-ivory-300 text-[10px] text-charcoal-400 font-sans no-print">
+            Click &ldquo;Print / PDF&rdquo; to download an archival broadsheet or save as PDF.
           </div>
         </div>
       </footer>

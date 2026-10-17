@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Plus, Sparkles, BookOpen, Clock, Tag } from 'lucide-react';
+import { X, Check, Plus, Sparkles, Tag, Compass } from 'lucide-react';
 import { UserPreferences, NewsTopic, AVAILABLE_TOPICS } from '@/types/news';
 
 interface OnboardingModalProps {
@@ -15,16 +15,16 @@ interface OnboardingModalProps {
 const INTEREST_SUGGESTIONS = [
   'Artificial Intelligence',
   'Space Exploration',
-  'Renewable Energy',
+  'Clean Energy',
   'Quantum Computing',
   'Global Geopolitics',
-  'Microchips & Hardware',
+  'Semiconductors & Chips',
   'Biotechnology',
   'Electric Vehicles',
   'Venture Capital',
   'Cybersecurity',
-  'Climate Action',
   'Macroeconomics',
+  'Neuroscience',
 ];
 
 export default function OnboardingModal({
@@ -35,7 +35,7 @@ export default function OnboardingModal({
   isFirstVisit = false,
 }: OnboardingModalProps) {
   const [readerName, setReaderName] = useState(preferences.readerName || '');
-  const [newspaperTitle, setNewspaperTitle] = useState(preferences.newspaperTitle || 'THE MORNING CHRONICLE');
+  const [newspaperTitle, setNewspaperTitle] = useState(preferences.newspaperTitle || 'DAYMARK');
   const [selectedTopics, setSelectedTopics] = useState<NewsTopic[]>(preferences.selectedTopics || ['technology', 'world']);
   const [customInterests, setCustomInterests] = useState<string[]>(preferences.customInterests || []);
   const [interestInput, setInterestInput] = useState('');
@@ -75,8 +75,8 @@ export default function OnboardingModal({
   const handleSave = () => {
     onSave({
       ...preferences,
-      readerName: readerName.trim() || 'Morning Reader',
-      newspaperTitle: newspaperTitle.trim() || 'THE MORNING CHRONICLE',
+      readerName: readerName.trim() || 'Reader',
+      newspaperTitle: newspaperTitle.trim() || 'DAYMARK',
       selectedTopics,
       customInterests,
       readingPace,
@@ -86,31 +86,31 @@ export default function OnboardingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div 
-        className="bg-paper-50 border-2 border-ink-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 md:p-8"
+        className="bg-ivory-100 border border-ivory-300 rounded-lg shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8"
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-title"
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-paper-300">
+        <div className="flex items-start justify-between pb-4 border-b border-ivory-300">
           <div>
-            <div className="flex items-center space-x-2 text-editorial-crimson font-serif font-bold text-xs uppercase tracking-widest">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isFirstVisit ? 'Welcome to NaSCon’26 Morning Paper' : 'Personalize Your Broadsheet'}</span>
+            <div className="flex items-center space-x-1.5 text-forest-700 font-sans font-semibold text-[11px] uppercase tracking-widest">
+              <Compass className="w-3.5 h-3.5" />
+              <span>{isFirstVisit ? 'Welcome to Daymark' : 'Curate Your Morning Broadsheet'}</span>
             </div>
-            <h2 id="onboarding-title" className="text-2xl md:text-3xl font-headline font-bold text-ink-900 mt-1">
-              Curate Your Morning Edition
+            <h2 id="onboarding-title" className="text-2xl sm:text-3xl font-headline font-bold text-charcoal-900 mt-1">
+              Personalize Your Edition
             </h2>
-            <p className="text-sm font-serif text-ink-600 mt-1">
-              Choose your editorial interests and custom topics to shape your personalized daily front page.
+            <p className="text-xs sm:text-sm font-serif italic text-charcoal-600 mt-1">
+              Your world, clearly delivered. Select your focus areas and topics for a tailored daily dispatch.
             </p>
           </div>
           {!isFirstVisit && (
             <button
               onClick={onClose}
-              className="p-1 text-ink-500 hover:text-ink-900 transition-colors"
+              className="p-1 text-charcoal-400 hover:text-charcoal-800 transition-colors"
               aria-label="Close preferences"
             >
               <X className="w-5 h-5" />
@@ -120,9 +120,9 @@ export default function OnboardingModal({
 
         <div className="space-y-6 py-4">
           {/* Section 1: Masthead Identity */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-sans font-bold uppercase tracking-wider text-ink-700 mb-1">
+              <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-1">
                 Your Name
               </label>
               <input
@@ -130,31 +130,31 @@ export default function OnboardingModal({
                 value={readerName}
                 onChange={(e) => {
                   setReaderName(e.target.value);
-                  if (newspaperTitle === 'THE MORNING CHRONICLE' || newspaperTitle.includes('TIMES')) {
-                    setNewspaperTitle(`THE ${e.target.value.toUpperCase() || 'MORNING'} CHRONICLE`);
+                  if (newspaperTitle === 'DAYMARK' || newspaperTitle.includes('DAYMARK')) {
+                    setNewspaperTitle(e.target.value.trim() ? `${e.target.value.trim().toUpperCase()} DAYMARK` : 'DAYMARK');
                   }
                 }}
                 placeholder="e.g. Eleanor Vance"
-                className="w-full px-3 py-2 bg-white border border-paper-300 rounded text-sm text-ink-900 focus:outline-none focus:ring-1 focus:ring-ink-900 font-serif"
+                className="w-full px-3 py-2 bg-ivory-50 border border-ivory-300 rounded text-sm text-charcoal-900 focus:outline-none focus:ring-1 focus:ring-forest-600 font-serif"
               />
             </div>
             <div>
-              <label className="block text-xs font-sans font-bold uppercase tracking-wider text-ink-700 mb-1">
-                Newspaper Masthead Name
+              <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-1">
+                Publication Masthead Name
               </label>
               <input
                 type="text"
                 value={newspaperTitle}
                 onChange={(e) => setNewspaperTitle(e.target.value)}
-                placeholder="e.g. THE DAILY DISPATCH"
-                className="w-full px-3 py-2 bg-white border border-paper-300 rounded text-sm text-ink-900 focus:outline-none focus:ring-1 focus:ring-ink-900 font-headline uppercase"
+                placeholder="e.g. DAYMARK"
+                className="w-full px-3 py-2 bg-ivory-50 border border-ivory-300 rounded text-sm text-charcoal-900 focus:outline-none focus:ring-1 focus:ring-forest-600 font-headline uppercase"
               />
             </div>
           </div>
 
           {/* Section 2: Core News Topics */}
           <div>
-            <label className="block text-xs font-sans font-bold uppercase tracking-wider text-ink-700 mb-2">
+            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-2">
               Select Editorial Topics (At least 1)
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -165,21 +165,21 @@ export default function OnboardingModal({
                     key={topic.id}
                     type="button"
                     onClick={() => toggleTopic(topic.id)}
-                    className={`p-2.5 rounded border text-left flex flex-col justify-between transition-all ${
+                    className={`p-3 rounded border text-left flex flex-col justify-between transition-all ${
                       isSelected
-                        ? 'bg-paper-200 border-ink-900 text-ink-900 shadow-sm'
-                        : 'bg-white border-paper-200 text-ink-600 hover:border-paper-300'
+                        ? 'bg-forest-50 border-forest-600 text-charcoal-900 shadow-2xs'
+                        : 'bg-ivory-50/80 border-ivory-200 text-charcoal-600 hover:border-ivory-300'
                     }`}
                   >
                     <div className="flex items-center justify-between w-full mb-1">
                       <span className="text-xs font-sans font-bold">{topic.label}</span>
                       {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-editorial-crimson" />
+                        <Check className="w-3.5 h-3.5 text-forest-700" />
                       ) : (
-                        <div className="w-3.5 h-3.5 rounded-full border border-paper-300" />
+                        <div className="w-3.5 h-3.5 rounded-full border border-ivory-400" />
                       )}
                     </div>
-                    <span className="text-[10px] text-ink-500 line-clamp-1">{topic.description}</span>
+                    <span className="text-[10px] text-charcoal-500 line-clamp-1">{topic.description}</span>
                   </button>
                 );
               })}
@@ -188,11 +188,11 @@ export default function OnboardingModal({
 
           {/* Section 3: Custom Interests & Keyword Boosters */}
           <div>
-            <label className="block text-xs font-sans font-bold uppercase tracking-wider text-ink-700 mb-1">
-              Custom Topics & High-Priority Keywords
+            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-1">
+              Custom Topic Lenses & Priority Keywords
             </label>
-            <p className="text-xs text-ink-500 mb-2">
-              Add niche interests. Our ranking engine will search titles and abstracts to boost relevant stories.
+            <p className="text-xs text-charcoal-500 mb-2">
+              Add niche interests. Our ranking engine elevates stories matching these exact phrases and subjects.
             </p>
 
             {/* Input row */}
@@ -202,34 +202,34 @@ export default function OnboardingModal({
                 value={interestInput}
                 onChange={(e) => setInterestInput(e.target.value)}
                 onKeyDown={handleKeyDownInterest}
-                placeholder="e.g. Fusion Energy, Quantum Computing, Startups..."
-                className="flex-1 px-3 py-2 bg-white border border-paper-300 rounded text-sm text-ink-900 focus:outline-none focus:ring-1 focus:ring-ink-900 font-serif"
+                placeholder="e.g. Clean Energy, SpaceX, Venture Capital..."
+                className="flex-1 px-3 py-2 bg-ivory-50 border border-ivory-300 rounded text-sm text-charcoal-900 focus:outline-none focus:ring-1 focus:ring-forest-600 font-serif"
               />
               <button
                 type="button"
                 onClick={() => addCustomInterest(interestInput)}
-                className="px-4 py-2 bg-ink-900 text-white rounded text-xs font-sans font-semibold hover:bg-black transition-colors flex items-center space-x-1"
+                className="px-4 py-2 bg-charcoal-900 text-ivory-50 rounded text-xs font-sans font-medium hover:bg-black transition-colors flex items-center space-x-1"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>Add</span>
               </button>
             </div>
 
             {/* Active custom tags */}
-            <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 bg-paper-100 rounded border border-paper-200 mb-2">
+            <div className="flex flex-wrap gap-1.5 min-h-[34px] p-2 bg-ivory-200/50 rounded border border-ivory-300 mb-2">
               {customInterests.length === 0 ? (
-                <span className="text-xs text-ink-400 italic">No custom interests added yet. Click suggestions below or type your own.</span>
+                <span className="text-xs text-charcoal-400 font-serif italic">No custom lenses added yet. Click suggestions below or type your own.</span>
               ) : (
                 customInterests.map((interest) => (
                   <span
                     key={interest}
-                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-white border border-ink-800 rounded-full text-xs font-sans font-medium text-ink-900 shadow-2xs"
+                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-ivory-50 border border-forest-300 rounded-full text-xs font-sans font-medium text-forest-800 shadow-2xs"
                   >
                     <span>{interest}</span>
                     <button
                       type="button"
                       onClick={() => removeCustomInterest(interest)}
-                      className="text-ink-400 hover:text-editorial-crimson ml-1"
+                      className="text-charcoal-400 hover:text-terracotta-600 ml-1"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -240,7 +240,7 @@ export default function OnboardingModal({
 
             {/* Quick Suggestions Chips */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-sans text-ink-500 mr-1 flex items-center">
+              <span className="text-[11px] font-sans text-charcoal-500 mr-1 flex items-center">
                 <Tag className="w-3 h-3 mr-1" /> Suggestions:
               </span>
               {INTEREST_SUGGESTIONS.filter((s) => !customInterests.includes(s)).slice(0, 6).map((s) => (
@@ -248,7 +248,7 @@ export default function OnboardingModal({
                   key={s}
                   type="button"
                   onClick={() => addCustomInterest(s)}
-                  className="text-[11px] font-sans px-2 py-0.5 bg-paper-200 hover:bg-paper-300 text-ink-700 rounded transition-colors"
+                  className="text-[11px] font-sans px-2.5 py-0.5 bg-ivory-200 hover:bg-ivory-300 text-charcoal-700 rounded transition-colors"
                 >
                   + {s}
                 </button>
@@ -258,7 +258,7 @@ export default function OnboardingModal({
 
           {/* Section 4: Reading Pace */}
           <div>
-            <label className="block text-xs font-sans font-bold uppercase tracking-wider text-ink-700 mb-2">
+            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-2">
               Morning Reading Pace
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -290,15 +290,15 @@ export default function OnboardingModal({
                     onClick={() => setReadingPace(pace.id as any)}
                     className={`p-3 rounded border text-left transition-all ${
                       isSelected
-                        ? 'bg-paper-200 border-ink-900 text-ink-900 shadow-sm'
-                        : 'bg-white border-paper-200 text-ink-600 hover:border-paper-300'
+                        ? 'bg-forest-50 border-forest-600 text-charcoal-900 shadow-2xs'
+                        : 'bg-ivory-50/80 border-ivory-200 text-charcoal-600 hover:border-ivory-300'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-sans font-bold">{pace.label}</span>
-                      <span className="text-[10px] font-mono text-editorial-amber">{pace.time}</span>
+                      <span className="text-[10px] font-mono text-forest-700 font-semibold">{pace.time}</span>
                     </div>
-                    <p className="text-[11px] text-ink-500 font-serif leading-tight">{pace.desc}</p>
+                    <p className="text-[11px] text-charcoal-500 font-serif leading-tight">{pace.desc}</p>
                   </button>
                 );
               })}
@@ -307,16 +307,16 @@ export default function OnboardingModal({
         </div>
 
         {/* Footer actions */}
-        <div className="pt-4 border-t border-paper-300 flex items-center justify-between">
-          <span className="text-xs font-serif text-ink-500 italic">
-            Ranked deterministically • Preferences saved to your device
+        <div className="pt-4 border-t border-ivory-300 flex items-center justify-between">
+          <span className="text-xs font-serif text-charcoal-500 italic">
+            Deterministic rule-based ranking • Saved locally
           </span>
           <div className="flex items-center space-x-3">
             {!isFirstVisit && (
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-sans font-medium text-ink-600 hover:text-ink-900"
+                className="px-4 py-2 text-xs font-sans font-medium text-charcoal-600 hover:text-charcoal-900"
               >
                 Cancel
               </button>
@@ -325,10 +325,10 @@ export default function OnboardingModal({
               id="btn-save-preferences-confirm"
               type="button"
               onClick={handleSave}
-              className="px-6 py-2.5 bg-ink-900 hover:bg-black text-white rounded text-sm font-sans font-bold tracking-wide shadow transition-colors flex items-center space-x-2"
+              className="px-6 py-2.5 bg-forest-600 hover:bg-forest-700 text-white rounded text-sm font-sans font-semibold tracking-wide shadow-xs transition-colors flex items-center space-x-2"
             >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>{isFirstVisit ? 'Generate My Morning Edition' : 'Update & Re-Rank Newspaper'}</span>
+              <Sparkles className="w-4 h-4 text-ivory-200" />
+              <span>{isFirstVisit ? 'Generate My Morning Edition' : 'Update & Re-Rank Daymark'}</span>
             </button>
           </div>
         </div>
