@@ -34,6 +34,32 @@ export interface UserAccount {
   password?: string;
   paperTitle: string;
   createdAt: string;
+  isVerified?: boolean;
+  otpCode?: string;
+  otpExpiresAt?: string;
+}
+
+export interface SuggestedInterest {
+  id: string;
+  topic: string;
+  confidence: number; // 0 to 100
+  reason: string;
+  category: NewsTopic | string;
+  sourceKeyword?: string;
+  suggestedAt: string;
+  accepted?: boolean;
+  dismissed?: boolean;
+}
+
+export interface DbInteraction {
+  id: string;
+  userId: string;
+  articleId: string;
+  articleTitle: string;
+  category: NewsTopic | string;
+  action: 'upvote' | 'downvote' | 'skip' | 'save' | 'read';
+  timestamp: string;
+  readDurationSeconds?: number;
 }
 
 export interface LearningSignal {
@@ -51,6 +77,7 @@ export interface UserPreferences {
   newspaperTitle: string;
   selectedTopics: NewsTopic[];
   customInterests: string[];
+  suggestedInterests?: SuggestedInterest[];
   readingPace: 'quick' | 'standard' | 'deep'; // quick: 5min, standard: 15min, deep: 30min
   onboarded: boolean;
   theme?: 'vintage' | 'modern' | 'sepia' | 'dark';

@@ -1,0 +1,98 @@
+{
+  "users": [
+    {
+      "id": "judge-nascon-2026",
+      "name": "Judge Vance",
+      "email": "judge@nascon2026.org",
+      "password": "judge-access-2026",
+      "paperTitle": "THE BROADSIDE DISPATCH",
+      "createdAt": "2026-10-17T06:00:00.000Z",
+      "isVerified": true,
+      "otpCode": "742891",
+      "otpExpiresAt": "2026-10-17T15:58:49.374Z"
+    }
+  ],
+  "interactions": [
+    {
+      "userId": "judge-nascon-2026",
+      "articleId": "art_1792251971971",
+      "articleTitle": "TSMC Ramps 2nm Fabrication Nodes with Extreme Ultraviolet Lithography",
+      "category": "technology",
+      "action": "upvote",
+      "timestamp": "2026-10-17T15:46:11.971Z",
+      "id": "act_1792251971971_a53h"
+    }
+  ],
+  "preferences": {
+    "judge-nascon-2026": {
+      "readerName": "Judge Vance",
+      "newspaperTitle": "THE BROADSIDE DISPATCH",
+      "selectedTopics": [
+        "technology",
+        "world",
+        "business",
+        "science"
+      ],
+      "customInterests": [
+        "Artificial Intelligence",
+        "Space Exploration",
+        "Clean Energy"
+      ],
+      "readingPace": "standard",
+      "onboarded": true,
+      "theme": "modern"
+    }
+  },
+  "savedEditions": {},
+  "suggestedInterests": {
+    "judge-nascon-2026": [
+      {
+        "id": "sug_graph_1792251971973_0",
+        "topic": "Agentic AI & Tool-Use Systems",
+        "confidence": 84,
+        "reason": "Inferred from high engagement with autonomous software systems and developer tooling.",
+        "category": "technology",
+        "suggestedAt": "2026-10-17T15:46:11.973Z"
+      },
+      {
+        "id": "sug_graph_1792251971973_1",
+        "topic": "Silicon Sovereignty & Advanced Packaging",
+        "confidence": 87,
+        "reason": "Detected interest in semiconductor fabrication, TSMC nodes, and chip export policies.",
+        "category": "technology",
+        "suggestedAt": "2026-10-17T15:46:11.973Z"
+      },
+      {
+        "id": "sug-judge-1",
+        "topic": "Silicon Sovereignty & Fabs",
+        "confidence": 94,
+        "reason": "Inferred from deep reading of semiconductor trade and AI compute scaling.",
+        "category": "technology",
+        "suggestedAt": "2026-10-17T15:43:49.356Z"
+      },
+      {
+        "id": "sug-judge-2",
+        "topic": "Autonomous AI Agents",
+        "confidence": 89,
+        "reason": "Frequent engagement with machine learning systems and workflow autonomy.",
+        "category": "technology",
+        "suggestedAt": "2026-10-17T15:43:49.356Z"
+      },
+      {
+        "id": "sug-judge-3",
+        "topic": "Clean Nuclear SMRs",
+        "confidence": 83,
+        "reason": "Detected interest at intersection of clean energy and data center grid demands.",
+        "category": "environment",
+        "suggestedAt": "2026-10-17T15:43:49.356Z"
+      }
+    ]
+  },
+  "otps": {
+    "judge@nascon2026.org": {
+      "code": "742891",
+      "expiresAt": "2026-10-17T15:58:49.374Z",
+      "verified": true
+    }
+  }
+}

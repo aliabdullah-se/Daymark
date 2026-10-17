@@ -48,6 +48,10 @@ export default function LoginPage() {
         impactDescription: 'Logged in as Judge Vance with verified live editorial queue.',
       });
 
+      // Set cookie for Next.js Middleware authentication
+      document.cookie = `daymark_token=${btoa(JSON.stringify({ id: DEMO_JUDGE_USER.id, email: DEMO_JUDGE_USER.email, name: DEMO_JUDGE_USER.name }))}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `daymark_otp_verified=true; path=/; max-age=604800; SameSite=Lax`;
+
       setSuccessMsg('Judge access verified! Redirecting to Today\'s Broadsheet...');
       // Force full page reload to ensure fresh localStorage read
       setTimeout(() => {
@@ -113,6 +117,10 @@ export default function LoginPage() {
       articleTitle: `Subscriber Session: ${user.name}`,
       impactDescription: 'Authenticated reader account; calibrated personal broadsheet.',
     });
+
+    // Set cookies for Next.js Middleware authentication
+    document.cookie = `daymark_token=${btoa(JSON.stringify({ id: user.id, email: user.email, name: user.name }))}; path=/; max-age=604800; SameSite=Lax`;
+    document.cookie = `daymark_otp_verified=true; path=/; max-age=604800; SameSite=Lax`;
 
     setSuccessMsg(`Welcome, ${user.name}! Loading your broadsheet...`);
     setTimeout(() => {
@@ -260,6 +268,17 @@ export default function LoginPage() {
               <span>{isLoading ? 'Entering Press Room...' : 'Sign In to Press Room'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+
+            {/* OTP Verification Button */}
+            <div className="pt-2">
+              <Link
+                href={`/verify-otp?email=${encodeURIComponent(email || DEMO_JUDGE_USER.email)}`}
+                className="w-full py-2 px-3 border border-[#496653] text-[#496653] hover:bg-[#496653]/10 font-sans text-xs font-semibold rounded flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Verify Identity via 6-Digit Press OTP</span>
+              </Link>
+            </div>
           </form>
 
           {/* Quick switch to signup */}

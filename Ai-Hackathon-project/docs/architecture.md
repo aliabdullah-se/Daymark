@@ -9,45 +9,69 @@
 
 ```mermaid
 graph TD
-    subgraph Ingestion ["1. Live Ingestion Layer (PKR 0 API Cost)"]
-        BBC["BBC News RSS<br/>World, Tech, Business, Science, Health"]
-        NYT["The New York Times RSS<br/>World, Tech, Science, Business, Climate"]
-        ARS["Ars Technica & NPR RSS<br/>Tech, Cosmos, Culture"]
+    classDef ingestion fill:#EAE7DC,stroke:#D8C3A5,stroke-width:1.5px,color:#20211F;
+    classDef server fill:#D8C3A5,stroke:#8E8D8A,stroke-width:1.5px,color:#20211F;
+    classDef ai fill:#E0E5DF,stroke:#496653,stroke-width:2px,color:#20211F;
+    classDef client fill:#F7F5EF,stroke:#496653,stroke-width:2px,color:#20211F;
+    classDef pages fill:#FFFFFF,stroke:#20211F,stroke-width:1.5px,color:#20211F;
+    classDef storage fill:#EFECE6,stroke:#B5A38C,stroke-width:1.5px,color:#20211F;
+
+    subgraph INGESTION["1. Live News Wire Ingestion Layer"]
+        BBC["BBC News RSS Feeds<br/>(World, Tech, Business, Science, Health)"]:::ingestion
+        NYT["The New York Times RSS<br/>(World, Tech, Science, Business, Climate)"]:::ingestion
+        ARS["Ars Technica & NPR RSS<br/>(Deep Technology, Cosmos, Culture)"]:::ingestion
     end
 
-    subgraph Server ["2. Next.js 14 App Router Server Layer"]
-        ROUTE["/api/news Route Handler"]
-        FETCHER["lib/rss.ts<br/>Parallel Multi-Feed Fetcher<br/>6s Timeout & Resilient Fallbacks"]
-        PARSER["fast-xml-parser<br/>XML Normalizer, Thumbnail & Enclosure Extractor"]
+    subgraph SERVER["2. Next.js 14 Server & API Gateway Layer"]
+        MW["middleware.ts<br/>Route Protection & Session Verification"]:::server
+        RSS_LIB["lib/rss.ts<br/>Parallel Multi-Feed Fetcher<br/>6s Timeout & Resilient Fallbacks"]:::server
+        PARSER["fast-xml-parser<br/>XML Normalizer & Thumbnail Extractor"]:::server
+        NEWS_API["/api/news<br/>Live Aggregated News Endpoint"]:::server
+        AUTH_API["/api/auth (me, otp/send, otp/verify)<br/>Passwordless Auth & Verification"]:::server
+        AI_LEARN["/api/ai/learn<br/>Adaptive Feedback & Learning Signals"]:::server
+        GEMINI_API["/api/ai/gemini<br/>Google Gemini 1.5 Flash REST Integration"]:::ai
+        DB["lib/db.ts<br/>data/daymark_db.json<br/>Persistent Server Store"]:::storage
     end
 
-    subgraph ClientCore ["3. Client-Side Deterministic Brain (100% Free)"]
-        STORE["lib/storage.ts<br/>Browser LocalStorage Engine<br/>• Users: daymark_users<br/>• Session: daymark_current_user<br/>• Calibration: daymark_preferences<br/>• Signals: daymark_signals<br/>• Archives: daymark_saved_editions"]
-        RANKER["lib/ranking.ts<br/>Explainable Scoring Engine (0-99%)<br/>Topic (+20) + Keywords (+35) + Recency (+20) + Pace (+10) +/- Feedback"]
-        SPEECH["Web Speech API (SpeechSynthesis)<br/>1-Click Spoken Morning Briefing"]
+    subgraph CLIENT_BRAIN["3. Client-Side Deterministic Brain & Scoring Engine"]
+        RANKER["lib/ranking.ts - Explainable Scoring Engine (0-99%)<br/>• Topic Match (+20)<br/>• Keyword Lenses (+35)<br/>• Freshness / Recency (+20)<br/>• Reading Pace Fit (+10)<br/>• Dynamic Feedback Affinity (-12.5 to +12.5)"]:::client
+        STORE["lib/storage.ts<br/>Browser LocalStorage Engine<br/>• Users & 1-Click Judge Access<br/>• Calibrated Desks & Keywords<br/>• Learning Signals & Feedback Log<br/>• Saved Daily Broadsheet Editions"]:::storage
+        AUDIO["Web Speech API (SpeechSynthesis)<br/>1-Click Spoken Morning Briefing Dispatch"]:::client
     end
 
-    subgraph Pages ["4. Multi-Page Editorial Experience"]
-        AUTH["/login & /signup<br/>• 1-Click Instant Demo Judge Access<br/>• In-browser subscriber auth"]
-        ONB["/onboarding<br/>3-Step Focus Desks, Keyword Lenses & Pace"]
-        HOME["/ (Today's Live Broadsheet)<br/>• Today's 3 Key Takeaways<br/>• Tide-Inspired Cover Story<br/>• Outside Your Bubble (Blindspot)<br/>• Interactive Upvote, Downvote, Skip & Save"]
-        ARCH["/archive<br/>Historical Editions Registry & Reader Modal"]
-        PROF["/profile<br/>Learning Brain, Topic Weights & Signal Audit Log"]
-        PRINT["Print / Save as PDF<br/>CSS @media print Broadsheet Engine"]
+    subgraph EDITORIAL_PAGES["4. Editorial Multi-Page Broadsheet UI (Tide / Reflecta Design)"]
+        LOGIN["/login & /signup & /verify-otp<br/>• 1-Click Instant Demo Judge Login<br/>• In-Browser / OTP Auth"]:::pages
+        ONB["/onboarding<br/>3-Step Desks, Custom Keyword Lenses & Reading Pace"]:::pages
+        HOME["/ (Today's Live Broadsheet)<br/>• Today's 3 Key Takeaways (Executive AI Briefing)<br/>• Tide-Inspired 2-Column Lead Cover Story<br/>• Outside Your Bubble (Blindspot Echo Breaker)<br/>• Transparent 'Why This?' Explainable Modal<br/>• Interactive Upvote, Downvote, Skip & Save"]:::pages
+        ARCHIVE["/archive<br/>Historical Editions Registry & Full Reader Modal"]:::pages
+        PROFILE["/profile<br/>Recommendation Learning Brain & Dynamic Topic Weights"]:::pages
+        PRINT["Print Engine / Save as PDF<br/>Standardized @media print Broadsheet CSS Engine"]:::pages
     end
 
-    Ingestion --> FETCHER
-    FETCHER --> PARSER
-    PARSER --> ROUTE
-    ROUTE -->|Live Verified Articles| HOME
-    STORE <-->|State & Auth| ClientCore
-    HOME <--> RANKER
-    HOME --> SPEECH
-    HOME --> PRINT
-    AUTH --> ONB
+    %% Ingestion Flow
+    BBC --> RSS_LIB
+    NYT --> RSS_LIB
+    ARS --> RSS_LIB
+    RSS_LIB --> PARSER
+    PARSER --> NEWS_API
+
+    %% Server & Auth Flow
+    MW --> AUTH_API
+    AUTH_API <--> DB
+    AI_LEARN <--> DB
+    GEMINI_API -.->|AI Executive Synthesis| HOME
+
+    %% UI to API Connections
+    NEWS_API -->|Live Normalized Articles| HOME
+    LOGIN --> ONB
     ONB --> HOME
-    HOME <--> ARCH
-    HOME <--> PROF
+    HOME <--> RANKER
+    HOME <--> STORE
+    HOME --> AUDIO
+    HOME --> PRINT
+    HOME <--> ARCHIVE
+    HOME <--> PROFILE
+    HOME -.->|Feedback Signal| AI_LEARN
 ```
 
 ---

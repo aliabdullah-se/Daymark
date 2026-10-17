@@ -76,6 +76,10 @@ export default function SignupPage() {
       impactDescription: `New broadsheet created for ${cleanName}. Proceeding to desk calibration.`,
     });
 
+    // Set authentication cookies for Next.js Middleware validation
+    document.cookie = `daymark_token=${btoa(JSON.stringify({ id: newUser.id, email: newUser.email, name: newUser.name }))}; path=/; max-age=604800; SameSite=Lax`;
+    document.cookie = `daymark_otp_verified=true; path=/; max-age=604800; SameSite=Lax`;
+
     setSuccessMsg(`Account created for ${cleanName}! Loading calibration desk...`);
     setTimeout(() => {
       window.location.href = '/onboarding';

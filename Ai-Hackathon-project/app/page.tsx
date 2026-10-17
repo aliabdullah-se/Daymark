@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Article, UserPreferences, UserFeedback, SavedEdition, NewsTopic, DEFAULT_PREFERENCES, AVAILABLE_TOPICS, UserAccount } from '@/types/news';
+import { Article, UserPreferences, UserFeedback, SavedEdition, NewsTopic, DEFAULT_PREFERENCES, AVAILABLE_TOPICS, UserAccount, SuggestedInterest } from '@/types/news';
 import { rankArticles, ScoredArticle } from '@/lib/ranking';
 import {
   getStoredPreferences,
@@ -27,7 +27,7 @@ import PrintPreviewModal from '@/components/PrintPreviewBanner';
 import GeminiKeyModal from '@/components/GeminiKeyModal';
 import { LoadingNewspaper, EmptyState, ErrorState } from '@/components/StatusStates';
 import { getGeminiApiKey, fetchGeminiTakeaways } from '@/lib/gemini';
-import { Sparkles, Bookmark, Search, RotateCcw, Clock, Quote, Printer, ShieldCheck, Compass, ExternalLink, BrainCircuit } from 'lucide-react';
+import { Sparkles, Bookmark, Search, RotateCcw, Clock, Quote, Printer, ShieldCheck, Compass, ExternalLink, BrainCircuit, Plus, X } from 'lucide-react';
 
 export default function MorningChroniclePage() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
@@ -38,6 +38,7 @@ export default function MorningChroniclePage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [suggestedInterests, setSuggestedInterests] = useState<SuggestedInterest[]>([]);
 
   // Modals & Navigation state
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -74,6 +75,16 @@ export default function MorningChroniclePage() {
     setSavedEditions(loadedEditions);
     setCurrentUser(user);
     setHasGeminiKey(!!getGeminiApiKey());
+
+    // Fetch real-time AI personalized suggested interests
+    fetch(`/api/ai/learn?userId=${user?.id || 'judge-nascon-2026'}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.suggestions) {
+          setSuggestedInterests(data.suggestions);
+        }
+      })
+      .catch(() => {});
 
     // If user has never onboarded, show onboarding prompt
     if (!loadedPrefs.onboarded) {
@@ -309,6 +320,7 @@ export default function MorningChroniclePage() {
         topic: article.category,
         impactDescription: `Boosted ${article.category} desk weight (+15% score) and keyword affinities.`,
       });
+      triggerRealtimeAiLearning('upvote', article);
     }
 
     showToast(isLiked ? 'Removed vote' : `Rank boosted for ${article.category} stories`);
@@ -348,6 +360,7 @@ export default function MorningChroniclePage() {
         topic: article.category,
         impactDescription: `Penalized ${article.category} frequency in future morning editions.`,
       });
+      triggerRealtimeAiLearning('downvote', article);
     }
 
     showToast(isDisliked ? 'Removed downvote' : `Reduced frequency of ${article.category} stories`);
@@ -373,6 +386,7 @@ export default function MorningChroniclePage() {
       topic: article.category,
       impactDescription: `Dismissed from edition; suppressed similar headlines.`,
     });
+    triggerRealtimeAiLearning('skip', article);
 
     showToast(`Story dismissed from today's paper`);
   };
@@ -398,9 +412,101 @@ export default function MorningChroniclePage() {
         topic: article.category,
         impactDescription: `Saved to clippings; reinforced interest in ${article.category}.`,
       });
+      triggerRealtimeAiLearning('save', article);
     }
 
     showToast(isSaved ? 'Removed from saved clippings' : 'Saved to personal morning clippings');
+  };
+
+  // Real-time AI learning signal & personalized suggestions
+  const triggerRealtimeAiLearning = async (
+    action: 'upvote' | 'downvote' | 'skip' | 'save',
+    article: ScoredArticle
+  ) => {
+    try {
+      const res = await fetch('/api/ai/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser?.id || 'judge-nascon-2026',
+          action,
+          articleId: article.id,
+          articleTitle: article.title,
+          category: article.category,
+          customInterests: preferences.customInterests,
+          geminiApiKey: getGeminiApiKey() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.suggestions) {
+        setSuggestedInterests(data.suggestions);
+      }
+    } catch (err) {
+      console.warn('Real-time AI learning signal sync error:', err);
+    }
+  };
+
+  const handleAcceptSuggestedInterest = async (topic: string, category: NewsTopic | string = 'technology') => {
+    const currentCustom = preferences.customInterests || [];
+    if (!currentCustom.includes(topic)) {
+      const updatedPrefs: UserPreferences = {
+        ...preferences,
+        customInterests: [...currentCustom, topic],
+      };
+      setPreferences(updatedPrefs);
+      saveStoredPreferences(updatedPrefs);
+    }
+
+    // Mark as accepted locally
+    setSuggestedInterests((prev) =>
+      prev.map((s) => (s.topic.toLowerCase() === topic.toLowerCase() ? { ...s, accepted: true } : s))
+    );
+
+    addLearningSignal({
+      type: 'calibrate',
+      articleTitle: `Added Inferred Interest: ${topic}`,
+      topic: category,
+      impactDescription: `Real-time AI expanded reader interest lens to include "${topic}". Re-ranking edition now.`,
+    });
+
+    showToast(`Added "${topic}" to your morning desks! Broadsheet re-ranked.`);
+
+    // Inform backend DB
+    try {
+      await fetch('/api/ai/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'accept',
+          userId: currentUser?.id || 'judge-nascon-2026',
+          topic,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to sync accepted interest:', err);
+    }
+  };
+
+  const handleDismissSuggestedInterest = async (topic: string) => {
+    setSuggestedInterests((prev) =>
+      prev.map((s) => (s.topic.toLowerCase() === topic.toLowerCase() ? { ...s, dismissed: true } : s))
+    );
+
+    showToast(`Dismissed recommendation for "${topic}".`);
+
+    try {
+      await fetch('/api/ai/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'dismiss',
+          userId: currentUser?.id || 'judge-nascon-2026',
+          topic,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to sync dismissed interest:', err);
+    }
   };
 
   // Preference update
@@ -674,6 +780,78 @@ export default function MorningChroniclePage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* 2. REAL-TIME AI INTEREST DISCOVERY & ADAPTIVE SUGGESTIONS BANNER */}
+            {suggestedInterests.filter((s) => !s.dismissed && !s.accepted).length > 0 && selectedTopicFilter === 'all' && (
+              <section className="mb-8 p-5 sm:p-6 bg-[#F4F1EA] border border-ivory-300 rounded shadow-2xs print-break-inside-avoid">
+                <div className="flex items-center justify-between border-b border-ivory-200/80 pb-3 mb-3 flex-wrap gap-2">
+                  <div className="flex items-center space-x-2">
+                    <BrainCircuit className="w-4 h-4 text-forest-700 animate-pulse" />
+                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.2em] text-forest-800">
+                      Real-Time AI Interest Discovery • Adaptive Editorial Engine
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono bg-forest-100 text-forest-800 px-2 py-0.5 rounded font-semibold">
+                    Learns in real-time as you read
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-1">
+                  <h3 className="font-headline text-xl font-bold text-charcoal-900">
+                    Emerging Curiosities Tailored to Your Live Reading Signals
+                  </h3>
+                  <span className="text-xs text-charcoal-500 font-serif italic">
+                    Click + to adopt into your daily newspaper desks
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  {suggestedInterests
+                    .filter((s) => !s.dismissed && !s.accepted)
+                    .slice(0, 3)
+                    .map((sug) => (
+                      <div
+                        key={sug.id}
+                        className="p-3.5 bg-white border border-ivory-300 rounded flex flex-col justify-between hover:border-forest-400 transition-colors shadow-2xs"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between text-[10px] font-sans uppercase tracking-wider mb-1.5">
+                            <span className="font-mono font-bold text-forest-700 bg-forest-50 px-1.5 py-0.5 rounded">
+                              {sug.confidence}% Match
+                            </span>
+                            <span className="text-charcoal-500 font-serif italic">{sug.category}</span>
+                          </div>
+                          <h4 className="font-headline text-sm font-bold text-charcoal-900 leading-snug mb-1">
+                            {sug.topic}
+                          </h4>
+                          <p className="font-serif text-xs text-charcoal-600 leading-relaxed mb-3">
+                            {sug.reason}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center space-x-2 pt-2 border-t border-ivory-200">
+                          <button
+                            type="button"
+                            onClick={() => handleAcceptSuggestedInterest(sug.topic, sug.category)}
+                            className="flex-1 py-1.5 px-2 bg-forest-700 hover:bg-forest-800 text-white rounded text-xs font-sans font-semibold flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add to Desks</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDismissSuggestedInterest(sug.topic)}
+                            className="p-1.5 text-charcoal-400 hover:text-charcoal-700 rounded hover:bg-ivory-100 transition-colors cursor-pointer"
+                            title="Dismiss suggestion"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </section>
             )}
