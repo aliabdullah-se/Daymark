@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd Ai-Hackathon-project && npm install && npm run build",
+  "outputDirectory": "Ai-Hackathon-project/.next",
+  "framework": "nextjs"
+}

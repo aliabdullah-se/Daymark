@@ -1,1 +1,91 @@
-﻿# PROJECT HANDOFF - NaSCon'26 Personal Morning Paper (setup in progress)
+# NaSCon'26 Challenge: Personalized Digital Morning Newspaper
+# Progress & Handover Document
+
+## 1. Zero-Budget Compliance Audit (PKR 0 Total Budget)
+- **Total Financial Expenditure**: PKR 0 / $0.00 USD.
+- **Credit Card / Payment Details**: None required or used at any point.
+- **News Data Ingestion**: 100% Free Public RSS Feeds (BBC News, The New York Times, Ars Technica, NPR News). No paid news APIs or subscriptions.
+- **AI / Personalization Engine**: 100% Free Transparent Rule-Based Ranking Engine (`lib/ranking.ts`). No paid OpenAI/Gemini/Anthropic tokens or API keys required.
+- **Database / Backend Storage**: 100% Free Browser `localStorage` (`lib/storage.ts`). No paid PostgreSQL, Supabase, Redis, or cloud storage instances.
+- **PDF Generation**: 100% Free Browser Native Print Engine (`@media print` in `globals.css`). No paid PDF generation services (Puppeteer SaaS, DocRaptor, etc.).
+- **Hosting & Deployment**: 100% Free Vercel Hobby Tier (or Render/Netlify Free Tiers). No credit card required, free `*.vercel.app` subdomain.
+
+## 2. Platform Free-Tier Limits & Mitigations
+| Service | Free Tier Limits | Mitigation / Status |
+| :--- | :--- | :--- |
+| **Public RSS Feeds** | Rate limiting if queried excessively per second | Server-side 5-minute caching (`next: { revalidate: 300 }`) and 6s timeout abort controller to prevent rate-limit bans |
+| **Vercel Hobby** | 100GB bandwidth/mo, 10s serverless function timeout, 100 deployment/day | Lightweight payload (<100KB), parallel RSS fetch finishes in ~600ms, well within all free limits |
+| **Browser Storage** | ~5MB localStorage quota per domain | Compact JSON storage; saved editions capped at 20 snapshots; clippings store IDs and metadata |
+| **Browser Print** | Dependent on client browser PDF driver | Standardized CSS print broadsheet rules, explicit dialog instructions for "Save as PDF" |
+
+## 3. Implemented Features & Verification State
+- **Status**: Complete MVP, Verified in Real Browser, Production Build Running.
+1. **Editorial Broadsheet Front Page** [VERIFIED]:
+   - Classic newspaper typography (Playfair Display, Cinzel, Newsreader), authentic double rules, and editorial drop caps.
+   - Distinct sections: Lead Headline Hero story, 2-column front-page reports, The Morning Wire fast-dispatch sidebar, and 5 categorical section blocks.
+   - Real-world source attribution (BBC, NYT, Ars Technica, NPR), publication dates, reading time estimates, and direct external links.
+2. **Personalized Onboarding & Preferences** [VERIFIED]:
+   - Customizable reader name & newspaper title (e.g., *THE VANCE DISPATCH*).
+   - 8 core editorial topics.
+   - Dynamic custom interests tags manager with 1-click suggestions (AI, Quantum Computing, SpaceX, Clean Energy, etc.).
+   - Reading pace selector (Quick Scan 5 min, Standard 15 min, Deep Dive 30 min).
+3. **Live Public Feed Aggregation (Zero Hallucination)** [VERIFIED]:
+   - Server-side multi-feed parallel fetcher in `lib/rss.ts`.
+   - Verified live retrieval of 215 real articles across BBC, NYT, Ars Technica, and NPR.
+4. **Explainable Ranking Engine** [VERIFIED]:
+   - Deterministic 0–99% personal relevance score calculated from:
+     - Topic match (+20 pts)
+     - Custom keyword phrase/token matches (+16 to +35 pts)
+     - Morning freshness / recency decay (+8 to +20 pts)
+     - Reading pace fit (+10 pts)
+     - User feedback affinity (+/- pts)
+   - "Why this?" modal breaking down the exact mathematical contribution for each story.
+5. **Interactive Reader Feedback** [VERIFIED]:
+   - Thumbs up (boosts topic & keyword weights).
+   - Thumbs down (demotes topic & keyword weights).
+   - Skip / Dismiss (✕) (removes article from today's paper).
+   - Saved Clippings / Bookmarks (🔖) with quick filter toggle.
+   - All state persisted locally in browser `localStorage`.
+6. **Morning Editions Archive** [VERIFIED]:
+   - "Save Today" button snapshots today's edition.
+   - Slide-over archive drawer to browse and read historical morning editions.
+7. **Clean Broadsheet PDF / Print** [VERIFIED]:
+   - Dedicated print modal instructing users to select "Save as PDF".
+   - `@media print` CSS engine formatting stories into broadsheet columns and hiding web UI buttons.
+
+## 4. Commands Run and Verification Results
+- `npm install`: Exited with code 0 (108 packages).
+- `npm run build`: Exited with code 0 (Next.js 14 production build compiled successfully).
+- `npm run start`: Running on `http://localhost:3000`.
+- API verification (`/api/news`): Verified live retrieval of 215 real articles.
+- Browser Subagent End-to-End Test:
+  - Onboarding completed for "Eleanor Vance" / "THE VANCE DISPATCH".
+  - Custom topic "Artificial Intelligence" added.
+  - Front-page lead story displayed with 94% relevance match.
+  - Explainability modal verified with scoring breakdown.
+  - Thumbs up and skip/dismiss (✕) verified.
+  - "Save Today" verified (archive incremented to 1).
+  - Archive drawer opened, confirming saved edition with 134 articles.
+  - Print / Save as PDF modal verified.
+
+## 5. Git Status & Commit History
+- Branch: `main`
+- Remote: `origin` (`https://github.com/aliabdullah-se/Ai-Hackathon-Project.git`)
+- Milestones committed:
+  - `34c7541`: Basic Structural Feature implementation (Core Next.js components, RSS aggregator, ranking engine, print engine)
+  - `626dab8`: docs: add architecture diagrams, comprehensive README, and environment setup instructions
+  - `[Current]`: deploy: add zero-budget Vercel configuration and handover progress record
+
+## 6. Deployment Guide (PKR 0 Cost)
+### Deploying to Vercel (Recommended):
+1. Push your latest code to GitHub:
+   ```bash
+   git push origin main
+   ```
+2. Go to [https://vercel.com/new](https://vercel.com/new) and log in with your GitHub account (No credit card required).
+3. Import the `Ai-Hackathon-Project` repository.
+4. If prompted for **Root Directory**, select `Ai-Hackathon-project` (or let `vercel.json` handle it).
+5. Click **Deploy**. Vercel will build and assign a free production URL (e.g. `https://morning-chronicle.vercel.app`).
+
+## 7. Next Highest-Priority Task
+- Push commits to GitHub `origin main` and deploy to Vercel's free tier for final submission before the 8:00 PM deadline.
