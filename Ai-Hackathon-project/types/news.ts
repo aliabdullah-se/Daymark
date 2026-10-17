@@ -27,6 +27,25 @@ export interface Article {
   matchedKeywords?: string[];
 }
 
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  paperTitle: string;
+  createdAt: string;
+}
+
+export interface LearningSignal {
+  id: string;
+  type: 'upvote' | 'downvote' | 'skip' | 'read' | 'save' | 'calibrate';
+  articleId?: string;
+  articleTitle: string;
+  topic?: NewsTopic | string;
+  timestamp: string;
+  impactDescription: string;
+}
+
 export interface UserPreferences {
   readerName: string;
   newspaperTitle: string;
@@ -55,7 +74,18 @@ export interface SavedEdition {
   articlesCount: number;
   articles: Article[];
   preferencesSnapshot: UserPreferences;
+  takeaways?: string[];
+  editionNumber?: string;
 }
+
+export const DEMO_JUDGE_USER: UserAccount = {
+  id: 'judge-nascon-2026',
+  name: 'Judge Vance',
+  email: 'judge@nascon2026.org',
+  password: 'judge-access-2026',
+  paperTitle: 'THE BROADSIDE DISPATCH',
+  createdAt: '2026-10-17T06:00:00.000Z',
+};
 
 export interface TopicMeta {
   id: NewsTopic;
