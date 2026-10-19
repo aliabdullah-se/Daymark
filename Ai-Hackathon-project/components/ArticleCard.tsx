@@ -3,6 +3,7 @@
 import React from 'react';
 import { ThumbsUp, ThumbsDown, X, Bookmark, ExternalLink, Sparkles, Clock, ArrowRight } from 'lucide-react';
 import { ScoredArticle } from '@/lib/ranking';
+import { useSettings } from './ThemeProvider';
 
 interface ArticleCardProps {
   article: ScoredArticle;
@@ -12,6 +13,7 @@ interface ArticleCardProps {
   onSkip: (article: ScoredArticle) => void;
   onBookmark: (article: ScoredArticle) => void;
   onWhyThis: (article: ScoredArticle) => void;
+  onRead?: (article: ScoredArticle) => void;
   isLiked?: boolean;
   isDisliked?: boolean;
   isBookmarked?: boolean;
@@ -25,10 +27,13 @@ export default function ArticleCard({
   onSkip,
   onBookmark,
   onWhyThis,
+  onRead,
   isLiked = false,
   isDisliked = false,
   isBookmarked = false,
 }: ArticleCardProps) {
+  const { settings } = useSettings();
+
   const pubDate = new Date(article.publishedAt);
   const formattedDate = pubDate.toLocaleDateString('en-US', {
     month: 'short',
@@ -37,18 +42,25 @@ export default function ArticleCard({
   });
   const formattedTime = pubDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // 1. HERO LEAD STORY VARIANT (Inspired by TIDE cover story)
+  const headlineFontClass =
+    settings.headlineFont === 'sans'
+      ? 'font-headline-sans'
+      : settings.headlineFont === 'classic'
+      ? 'font-headline-classic'
+      : 'font-headline-serif';
+
+  // 1. HERO LEAD STORY VARIANT
   if (variant === 'hero') {
     return (
-      <article className="pb-8 mb-8 border-b border-ivory-300 print-break-inside-avoid">
+      <article className="pb-8 mb-8 border-b border-[var(--border-subtle)] print-break-inside-avoid">
         {/* Cover Story Header Tagline */}
         <div className="flex items-center justify-between text-xs font-sans mb-3 flex-wrap gap-2">
           <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-forest-600">
+            <span className="text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
               Cover Story
             </span>
-            <span className="text-ivory-400">•</span>
-            <span className="text-[11px] font-sans uppercase tracking-wider text-charcoal-600">
+            <span className="text-[var(--border-subtle)]">•</span>
+            <span className="text-[11px] font-sans uppercase tracking-wider text-[var(--text-secondary)]">
               {article.category}
             </span>
           </div>
@@ -56,14 +68,14 @@ export default function ArticleCard({
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onWhyThis(article)}
-              className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-forest-50 hover:bg-forest-100 text-forest-700 text-[11px] font-sans font-medium border border-forest-200 transition-colors no-print cursor-pointer"
+              className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-[var(--accent-subtle)] hover:opacity-90 text-[var(--accent-text)] text-[11px] font-sans font-medium border border-[var(--accent-border)] transition-colors no-print cursor-pointer"
               title="Click to view why this was ranked for you"
             >
-              <Sparkles className="w-3 h-3 text-forest-600" />
+              <Sparkles className="w-3 h-3 text-[var(--accent-primary)]" />
               <span>{article.relevanceScore}% Match</span>
             </button>
-            <span className="text-ivory-400 no-print">•</span>
-            <span className="flex items-center text-charcoal-500 text-[11px] font-sans">
+            <span className="text-[var(--border-subtle)] no-print">•</span>
+            <span className="flex items-center text-[var(--text-muted)] text-[11px] font-sans">
               <Clock className="w-3 h-3 mr-1" />
               {article.readTimeMinutes} min read
             </span>
@@ -72,9 +84,9 @@ export default function ArticleCard({
 
         {/* Responsive Grid: Photo + Content */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          {/* Hero Image */}
-          {article.imageUrl ? (
-            <div className="lg:col-span-6 w-full overflow-hidden rounded bg-ivory-200 border border-ivory-300 shadow-2xs">
+          {/* Hero Image (Respects settings.showImages) */}
+          {settings.showImages && article.imageUrl ? (
+            <div className="lg:col-span-6 w-full overflow-hidden rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] shadow-xs">
               <img
                 src={article.imageUrl}
                 alt={article.title}
@@ -84,7 +96,7 @@ export default function ArticleCard({
                   (e.target as HTMLElement).style.display = 'none';
                 }}
               />
-              <div className="py-1.5 px-3 text-[10px] text-charcoal-500 font-sans italic bg-ivory-50 border-t border-ivory-200 flex justify-between">
+              <div className="py-1.5 px-3 text-[10px] text-[var(--text-muted)] font-sans italic bg-[var(--bg-surface-subtle)] border-t border-[var(--border-subtle)] flex justify-between">
                 <span>Via {article.source.name}</span>
                 <span>{formattedDate}</span>
               </div>
@@ -92,82 +104,107 @@ export default function ArticleCard({
           ) : null}
 
           {/* Headline & Abstract Column */}
-          <div className={article.imageUrl ? 'lg:col-span-6' : 'lg:col-span-12'}>
-            <h2 className="font-headline text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-normal sm:font-medium italic text-charcoal-900 leading-[1.08] tracking-tight mb-4 hover:text-forest-700 transition-colors">
-              <a href={article.url} target="_blank" rel="noopener noreferrer">
-                {article.title}
-              </a>
+          <div className={settings.showImages && article.imageUrl ? 'lg:col-span-6' : 'lg:col-span-12'}>
+            <h2 className={`${headlineFontClass} text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-normal sm:font-medium italic text-[var(--text-primary)] leading-[1.08] tracking-tight mb-4 hover:text-[var(--accent-primary)] transition-colors`}>
+              {onRead ? (
+                <button
+                  type="button"
+                  onClick={() => onRead(article)}
+                  className="text-left cursor-pointer hover:text-[var(--accent-primary)] transition-colors"
+                >
+                  {article.title}
+                </button>
+              ) : (
+                <a href={article.url} target="_blank" rel="noopener noreferrer">
+                  {article.title}
+                </a>
+              )}
             </h2>
 
             {/* Byline & Source info */}
-            <div className="text-xs font-sans text-charcoal-500 mb-4 flex items-center flex-wrap gap-2">
-              <span className="font-medium text-charcoal-800">Reporting by {article.source.name}</span>
+            <div className="text-xs font-sans text-[var(--text-muted)] mb-4 flex items-center flex-wrap gap-2">
+              <span className="font-medium text-[var(--text-secondary)]">Reporting by {article.source.name}</span>
               {article.author && (
                 <>
-                  <span className="text-ivory-400">•</span>
+                  <span className="text-[var(--border-subtle)]">•</span>
                   <span>By {article.author}</span>
                 </>
               )}
-              <span className="text-ivory-400">•</span>
+              <span className="text-[var(--border-subtle)]">•</span>
               <span>{formattedDate}</span>
             </div>
 
             {/* Narrative text with dropcap */}
-            <p className="text-base sm:text-lg font-serif text-charcoal-700 leading-relaxed editorial-dropcap mb-6">
+            <p className="text-base sm:text-lg font-serif text-[var(--text-secondary)] leading-relaxed editorial-dropcap mb-6">
               {article.description}
             </p>
 
             {/* Bottom Actions Row */}
-            <div className="flex items-center justify-between pt-4 border-t border-ivory-200 text-xs font-sans flex-wrap gap-3">
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1.5 text-forest-700 hover:text-forest-900 font-semibold font-sans group transition-colors"
-              >
-                <span>Read the full feature</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </a>
+            <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)] text-xs font-sans flex-wrap gap-3">
+              {onRead ? (
+                <button
+                  type="button"
+                  onClick={() => onRead(article)}
+                  className="inline-flex items-center space-x-1.5 text-[var(--accent-primary)] hover:underline font-semibold font-sans group transition-colors cursor-pointer"
+                >
+                  <span>Read the full feature</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1.5 text-[var(--accent-primary)] hover:underline font-semibold font-sans group transition-colors"
+                >
+                  <span>Read the full feature</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </a>
+              )}
 
               {/* Feedback controls */}
-              <div className="flex items-center space-x-1 no-print">
+              <div className="flex items-center space-x-1.5 no-print">
                 <button
                   onClick={() => onLike(article)}
-                  className={`p-1.5 rounded transition-colors ${
+                  className={`p-1.5 rounded transition-all cursor-pointer ${
                     isLiked
-                      ? 'bg-forest-100 text-forest-800 font-bold'
-                      : 'hover:bg-ivory-200 text-charcoal-500'
+                      ? 'bg-[var(--accent-subtle)] text-[var(--accent-primary)] font-bold border border-[var(--accent-border)]'
+                      : 'hover:bg-[var(--bg-surface-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                   title="More stories like this"
+                  aria-label="Like story"
                 >
                   <ThumbsUp className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onDislike(article)}
-                  className={`p-1.5 rounded transition-colors ${
+                  className={`p-1.5 rounded transition-all cursor-pointer ${
                     isDisliked
-                      ? 'bg-terracotta-100 text-terracotta-600 font-bold'
-                      : 'hover:bg-ivory-200 text-charcoal-500'
+                      ? 'bg-red-500/10 text-red-500 font-bold border border-red-500/30'
+                      : 'hover:bg-[var(--bg-surface-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                   title="Less stories like this"
+                  aria-label="Dislike story"
                 >
                   <ThumbsDown className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onBookmark(article)}
-                  className={`p-1.5 rounded transition-colors ${
+                  className={`p-1.5 rounded transition-all cursor-pointer ${
                     isBookmarked
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'hover:bg-ivory-200 text-charcoal-500'
+                      ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                      : 'hover:bg-[var(--bg-surface-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                   title={isBookmarked ? 'Saved in clippings' : 'Save story'}
+                  aria-label="Bookmark story"
                 >
                   <Bookmark className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onSkip(article)}
-                  className="p-1.5 rounded hover:bg-ivory-200 text-charcoal-400 hover:text-charcoal-800 transition-colors"
+                  className="p-1.5 rounded hover:bg-[var(--bg-surface-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                   title="Dismiss story from today's paper"
+                  aria-label="Dismiss story"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -179,41 +216,62 @@ export default function ArticleCard({
     );
   }
 
-  // 2. WIRE / SIDEBAR COMPACT DISPATCH VARIANT
+  // 2. WIRE / SIDEBAR COMPACT REPORT VARIANT
   if (variant === 'wire') {
     return (
-      <div className="py-3 border-b border-ivory-200/80 last:border-b-0 print-break-inside-avoid group">
-        <div className="flex items-center justify-between text-[11px] font-sans text-charcoal-500 mb-1">
-          <span className="font-semibold text-forest-700 uppercase tracking-wider text-[10px]">
+      <div className="py-3 border-b border-[var(--border-subtle)] last:border-b-0 print-break-inside-avoid group">
+        <div className="flex items-center justify-between text-[11px] font-sans text-[var(--text-muted)] mb-1">
+          <span className="font-semibold text-[var(--accent-primary)] uppercase tracking-wider text-[10px]">
             {article.source.name}
           </span>
-          <span className="font-mono text-charcoal-400 text-[10px]">{formattedTime}</span>
+          <span className="font-mono text-[var(--text-muted)] text-[10px]">{formattedTime}</span>
         </div>
-        <h4 className="text-sm font-serif font-bold text-charcoal-900 leading-snug group-hover:text-forest-700 transition-colors">
-          <a href={article.url} target="_blank" rel="noopener noreferrer">
-            {article.title}
-          </a>
+        <h4 className={`text-sm ${headlineFontClass} font-bold text-[var(--text-primary)] leading-snug group-hover:text-[var(--accent-primary)] transition-colors`}>
+          {onRead ? (
+            <button
+              type="button"
+              onClick={() => onRead(article)}
+              className="text-left cursor-pointer hover:text-[var(--accent-primary)] transition-colors"
+            >
+              {article.title}
+            </button>
+          ) : (
+            <a href={article.url} target="_blank" rel="noopener noreferrer">
+              {article.title}
+            </a>
+          )}
         </h4>
-        <p className="text-xs font-serif text-charcoal-600 line-clamp-2 mt-1 leading-normal">
+        <p className="text-xs font-serif text-[var(--text-secondary)] line-clamp-2 mt-1 leading-normal">
           {article.description}
         </p>
-        <div className="flex items-center justify-between mt-2 pt-1 text-[11px] font-sans text-charcoal-500">
+        <div className="flex items-center justify-between mt-2 pt-1 text-[11px] font-sans text-[var(--text-muted)]">
           <button
             onClick={() => onWhyThis(article)}
-            className="flex items-center space-x-1 text-forest-600 hover:underline no-print text-[10px]"
+            className="flex items-center space-x-1 text-[var(--accent-primary)] hover:underline no-print text-[10px] cursor-pointer"
           >
             <Sparkles className="w-2.5 h-2.5" />
             <span>{article.relevanceScore}% match</span>
           </button>
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center space-x-0.5 text-charcoal-700 hover:text-charcoal-900 font-medium text-[11px]"
-          >
-            <span>Read</span>
-            <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
-          </a>
+          {onRead ? (
+            <button
+              type="button"
+              onClick={() => onRead(article)}
+              className="inline-flex items-center space-x-0.5 text-[var(--text-primary)] hover:text-[var(--accent-primary)] font-medium text-[11px] cursor-pointer"
+            >
+              <span>Read</span>
+              <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
+            </button>
+          ) : (
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center space-x-0.5 text-[var(--text-primary)] hover:text-[var(--accent-primary)] font-medium text-[11px]"
+            >
+              <span>Read</span>
+              <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+            </a>
+          )}
         </div>
       </div>
     );
@@ -221,30 +279,35 @@ export default function ArticleCard({
 
   // 3. STANDARD EDITORIAL GRID STORY
   return (
-    <article className="border border-ivory-300 bg-ivory-50/60 hover:bg-white rounded p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xs hover:border-ivory-400 print-break-inside-avoid group">
+    <article className="border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-elevated)] rounded-lg p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xs group print-break-inside-avoid">
       <div>
         {/* Source & Category Header */}
-        <div className="flex items-center justify-between text-xs font-sans text-charcoal-500 mb-2.5">
+        <div className="flex items-center justify-between text-xs font-sans text-[var(--text-muted)] mb-2.5">
           <div className="flex items-center space-x-1.5">
-            <span className="font-bold uppercase tracking-wider text-[10px] text-forest-600">
+            <span className="font-bold uppercase tracking-wider text-[10px] text-[var(--accent-primary)]">
               {article.category}
             </span>
             <span>•</span>
-            <span className="font-medium text-charcoal-700">{article.source.name}</span>
+            <span className="font-medium text-[var(--text-secondary)]">{article.source.name}</span>
           </div>
           <button
             onClick={() => onWhyThis(article)}
-            className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-ivory-200/80 hover:bg-ivory-300 text-charcoal-800 text-[10px] font-sans font-medium transition-colors no-print"
+            className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-[var(--bg-surface-subtle)] hover:bg-[var(--accent-subtle)] text-[var(--text-secondary)] hover:text-[var(--accent-text)] text-[10px] font-sans font-medium transition-colors no-print cursor-pointer border border-[var(--border-subtle)]"
             title="Click to view why this was ranked for you"
           >
-            <Sparkles className="w-2.5 h-2.5 text-forest-600" />
+            <Sparkles className="w-2.5 h-2.5 text-[var(--accent-primary)]" />
             <span>{article.relevanceScore}%</span>
           </button>
         </div>
 
-        {/* Thumbnail if present */}
-        {article.imageUrl && (
-          <div className="mb-3 overflow-hidden rounded bg-ivory-200 border border-ivory-300">
+        {/* Thumbnail if present and enabled */}
+        {settings.showImages && article.imageUrl && (
+          <div
+            onClick={() => onRead && onRead(article)}
+            className={`mb-3 overflow-hidden rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] ${
+              onRead ? 'cursor-pointer' : ''
+            }`}
+          >
             <img
               src={article.imageUrl}
               alt={article.title}
@@ -258,21 +321,31 @@ export default function ArticleCard({
         )}
 
         {/* Headline */}
-        <h3 className="text-lg sm:text-xl font-headline font-semibold text-charcoal-900 leading-snug mb-2 group-hover:text-forest-700 transition-colors">
-          <a href={article.url} target="_blank" rel="noopener noreferrer">
-            {article.title}
-          </a>
+        <h3 className={`text-lg sm:text-xl ${headlineFontClass} font-semibold text-[var(--text-primary)] leading-snug mb-2 group-hover:text-[var(--accent-primary)] transition-colors`}>
+          {onRead ? (
+            <button
+              type="button"
+              onClick={() => onRead(article)}
+              className="text-left cursor-pointer hover:text-[var(--accent-primary)] transition-colors"
+            >
+              {article.title}
+            </button>
+          ) : (
+            <a href={article.url} target="_blank" rel="noopener noreferrer">
+              {article.title}
+            </a>
+          )}
         </h3>
 
         {/* Abstract */}
-        <p className="text-xs sm:text-sm font-serif text-charcoal-600 line-clamp-3 leading-relaxed mb-4">
+        <p className="text-xs sm:text-sm font-serif text-[var(--text-secondary)] line-clamp-3 leading-relaxed mb-4">
           {article.description}
         </p>
       </div>
 
       {/* Footer & Feedback Actions */}
-      <div className="pt-3 border-t border-ivory-200 flex items-center justify-between text-xs font-sans">
-        <div className="flex items-center space-x-2 text-[11px] text-charcoal-500">
+      <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs font-sans">
+        <div className="flex items-center space-x-2 text-[11px] text-[var(--text-muted)]">
           <span>{formattedDate}</span>
           <span>•</span>
           <span>{article.readTimeMinutes}m read</span>
@@ -281,35 +354,45 @@ export default function ArticleCard({
         <div className="flex items-center space-x-1 no-print">
           <button
             onClick={() => onLike(article)}
-            className={`p-1 rounded hover:bg-ivory-200 transition-colors ${
-              isLiked ? 'text-forest-700 font-bold' : 'text-charcoal-400 hover:text-charcoal-700'
+            className={`p-1 rounded transition-colors cursor-pointer ${
+              isLiked
+                ? 'bg-[var(--accent-subtle)] text-[var(--accent-primary)] font-bold border border-[var(--accent-border)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)]'
             }`}
             title="More stories like this"
+            aria-label="Like"
           >
             <ThumbsUp className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onDislike(article)}
-            className={`p-1 rounded hover:bg-ivory-200 transition-colors ${
-              isDisliked ? 'text-terracotta-600 font-bold' : 'text-charcoal-400 hover:text-charcoal-700'
+            className={`p-1 rounded transition-colors cursor-pointer ${
+              isDisliked
+                ? 'bg-red-500/10 text-red-500 font-bold border border-red-500/30'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)]'
             }`}
             title="Less stories like this"
+            aria-label="Dislike"
           >
             <ThumbsDown className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onBookmark(article)}
-            className={`p-1 rounded hover:bg-ivory-200 transition-colors ${
-              isBookmarked ? 'text-amber-700' : 'text-charcoal-400 hover:text-charcoal-700'
+            className={`p-1 rounded transition-colors cursor-pointer ${
+              isBookmarked
+                ? 'bg-amber-500/15 text-amber-500 font-bold border border-amber-500/30'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)]'
             }`}
             title="Save article"
+            aria-label="Bookmark"
           >
             <Bookmark className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onSkip(article)}
-            className="p-1 rounded hover:bg-ivory-200 text-charcoal-400 hover:text-charcoal-800 transition-colors"
+            className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)] transition-colors cursor-pointer"
             title="Dismiss article"
+            aria-label="Dismiss"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -317,8 +400,9 @@ export default function ArticleCard({
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1 text-charcoal-700 hover:text-forest-700 transition-colors ml-0.5"
+            className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors ml-0.5"
             title="Open original publication"
+            aria-label="Open original link"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </a>

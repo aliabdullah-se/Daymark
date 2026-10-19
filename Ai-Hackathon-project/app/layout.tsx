@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'Daymark | Your world, clearly delivered.',
+  title: 'DAYMARK | Your world, clearly delivered.',
   description: 'A personalized digital morning newspaper inspired by modern editorial broadsheets, curated from premier global news sources.',
-  keywords: ['Daymark', 'personalized newspaper', 'morning dispatch', 'news broadsheet', 'NaSCon 26'],
-  authors: [{ name: 'Daymark Editorial Board' }],
+  keywords: ['DAYMARK', 'personalized newspaper', 'morning newspaper', 'news broadsheet', 'editorial curation'],
+  authors: [{ name: 'DAYMARK Editorial Board' }],
 };
 
 export default function RootLayout({
@@ -14,9 +15,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen flex flex-col antialiased bg-ivory-100 text-charcoal-900 selection:bg-forest-100 selection:text-forest-900">
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col antialiased bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

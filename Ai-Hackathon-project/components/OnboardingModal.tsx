@@ -86,31 +86,31 @@ export default function OnboardingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 no-print">
       <div 
-        className="bg-ivory-100 border border-ivory-300 rounded-lg shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8"
+        className="bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-lg shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 transition-colors duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-title"
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-ivory-300">
+        <div className="flex items-start justify-between pb-4 border-b border-[var(--border-subtle)]">
           <div>
-            <div className="flex items-center space-x-1.5 text-forest-700 font-sans font-semibold text-[11px] uppercase tracking-widest">
+            <div className="flex items-center space-x-1.5 text-[var(--accent-primary)] font-sans font-semibold text-[11px] uppercase tracking-widest">
               <Compass className="w-3.5 h-3.5" />
-              <span>{isFirstVisit ? 'Welcome to Daymark' : 'Curate Your Morning Broadsheet'}</span>
+              <span>{isFirstVisit ? 'Welcome to DAYMARK' : 'Curate Your Morning Broadsheet'}</span>
             </div>
-            <h2 id="onboarding-title" className="text-2xl sm:text-3xl font-headline font-bold text-charcoal-900 mt-1">
+            <h2 id="onboarding-title" className="text-2xl sm:text-3xl font-headline font-bold text-[var(--text-primary)] mt-1">
               Personalize Your Edition
             </h2>
-            <p className="text-xs sm:text-sm font-serif italic text-charcoal-600 mt-1">
-              Your world, clearly delivered. Select your focus areas and topics for a tailored daily dispatch.
+            <p className="text-xs sm:text-sm font-serif italic text-[var(--text-secondary)] mt-1">
+              Your world, clearly delivered. Select your focus areas and topics for a tailored daily edition.
             </p>
           </div>
           {!isFirstVisit && (
             <button
               onClick={onClose}
-              className="p-1 text-charcoal-400 hover:text-charcoal-800 transition-colors"
+              className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               aria-label="Close preferences"
             >
               <X className="w-5 h-5" />
@@ -122,7 +122,7 @@ export default function OnboardingModal({
           {/* Section 1: Masthead Identity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-1">
+              <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">
                 Your Name
               </label>
               <input
@@ -135,11 +135,11 @@ export default function OnboardingModal({
                   }
                 }}
                 placeholder="e.g. Eleanor Vance"
-                className="w-full px-3 py-2 bg-ivory-50 border border-ivory-300 rounded text-sm text-charcoal-900 focus:outline-none focus:ring-1 focus:ring-forest-600 font-serif"
+                className="w-full px-3 py-2 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded text-sm text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-primary)] font-serif"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-1">
+              <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">
                 Publication Masthead Name
               </label>
               <input
@@ -147,14 +147,14 @@ export default function OnboardingModal({
                 value={newspaperTitle}
                 onChange={(e) => setNewspaperTitle(e.target.value)}
                 placeholder="e.g. DAYMARK"
-                className="w-full px-3 py-2 bg-ivory-50 border border-ivory-300 rounded text-sm text-charcoal-900 focus:outline-none focus:ring-1 focus:ring-forest-600 font-headline uppercase"
+                className="w-full px-3 py-2 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded text-sm text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-primary)] font-headline uppercase"
               />
             </div>
           </div>
 
           {/* Section 2: Core News Topics */}
           <div>
-            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-2">
+            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
               Select Editorial Topics (At least 1)
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -165,21 +165,21 @@ export default function OnboardingModal({
                     key={topic.id}
                     type="button"
                     onClick={() => toggleTopic(topic.id)}
-                    className={`p-3 rounded border text-left flex flex-col justify-between transition-all ${
+                    className={`p-3 rounded border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-forest-50 border-forest-600 text-charcoal-900 shadow-2xs'
-                        : 'bg-ivory-50/80 border-ivory-200 text-charcoal-600 hover:border-ivory-300'
+                        ? 'bg-[var(--accent-subtle)] border-[var(--accent-primary)] text-[var(--text-primary)] shadow-2xs'
+                        : 'bg-[var(--bg-surface-elevated)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                     }`}
                   >
                     <div className="flex items-center justify-between w-full mb-1">
                       <span className="text-xs font-sans font-bold">{topic.label}</span>
                       {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-forest-700" />
+                        <Check className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       ) : (
-                        <div className="w-3.5 h-3.5 rounded-full border border-ivory-400" />
+                        <div className="w-3.5 h-3.5 rounded-full border border-[var(--border-subtle)]" />
                       )}
                     </div>
-                    <span className="text-[10px] text-charcoal-500 line-clamp-1">{topic.description}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] line-clamp-1">{topic.description}</span>
                   </button>
                 );
               })}
@@ -188,10 +188,10 @@ export default function OnboardingModal({
 
           {/* Section 3: Custom Interests & Keyword Boosters */}
           <div>
-            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-1">
+            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">
               Custom Topic Lenses & Priority Keywords
             </label>
-            <p className="text-xs text-charcoal-500 mb-2">
+            <p className="text-xs text-[var(--text-muted)] mb-2">
               Add niche interests. Our ranking engine elevates stories matching these exact phrases and subjects.
             </p>
 
@@ -203,12 +203,12 @@ export default function OnboardingModal({
                 onChange={(e) => setInterestInput(e.target.value)}
                 onKeyDown={handleKeyDownInterest}
                 placeholder="e.g. Clean Energy, SpaceX, Venture Capital..."
-                className="flex-1 px-3 py-2 bg-ivory-50 border border-ivory-300 rounded text-sm text-charcoal-900 focus:outline-none focus:ring-1 focus:ring-forest-600 font-serif"
+                className="flex-1 px-3 py-2 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded text-sm text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-primary)] font-serif"
               />
               <button
                 type="button"
                 onClick={() => addCustomInterest(interestInput)}
-                className="px-4 py-2 bg-charcoal-900 text-ivory-50 rounded text-xs font-sans font-medium hover:bg-black transition-colors flex items-center space-x-1"
+                className="px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-page)] rounded text-xs font-sans font-bold hover:opacity-90 transition-opacity flex items-center space-x-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add</span>
@@ -216,20 +216,20 @@ export default function OnboardingModal({
             </div>
 
             {/* Active custom tags */}
-            <div className="flex flex-wrap gap-1.5 min-h-[34px] p-2 bg-ivory-200/50 rounded border border-ivory-300 mb-2">
+            <div className="flex flex-wrap gap-1.5 min-h-[34px] p-2 bg-[var(--bg-surface-elevated)] rounded border border-[var(--border-subtle)] mb-2">
               {customInterests.length === 0 ? (
-                <span className="text-xs text-charcoal-400 font-serif italic">No custom lenses added yet. Click suggestions below or type your own.</span>
+                <span className="text-xs text-[var(--text-muted)] font-serif italic">No custom lenses added yet. Click suggestions below or type your own.</span>
               ) : (
                 customInterests.map((interest) => (
                   <span
                     key={interest}
-                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-ivory-50 border border-forest-300 rounded-full text-xs font-sans font-medium text-forest-800 shadow-2xs"
+                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-[var(--accent-subtle)] border border-[var(--accent-border)] rounded-full text-xs font-sans font-medium text-[var(--accent-text)] shadow-2xs"
                   >
                     <span>{interest}</span>
                     <button
                       type="button"
                       onClick={() => removeCustomInterest(interest)}
-                      className="text-charcoal-400 hover:text-terracotta-600 ml-1"
+                      className="text-[var(--text-muted)] hover:text-red-500 ml-1 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -240,7 +240,7 @@ export default function OnboardingModal({
 
             {/* Quick Suggestions Chips */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-sans text-charcoal-500 mr-1 flex items-center">
+              <span className="text-[11px] font-sans text-[var(--text-muted)] mr-1 flex items-center">
                 <Tag className="w-3 h-3 mr-1" /> Suggestions:
               </span>
               {INTEREST_SUGGESTIONS.filter((s) => !customInterests.includes(s)).slice(0, 6).map((s) => (
@@ -248,7 +248,7 @@ export default function OnboardingModal({
                   key={s}
                   type="button"
                   onClick={() => addCustomInterest(s)}
-                  className="text-[11px] font-sans px-2.5 py-0.5 bg-ivory-200 hover:bg-ivory-300 text-charcoal-700 rounded transition-colors"
+                  className="text-[11px] font-sans px-2.5 py-0.5 bg-[var(--bg-surface-elevated)] hover:bg-[var(--bg-surface-subtle)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded transition-colors cursor-pointer"
                 >
                   + {s}
                 </button>
@@ -258,7 +258,7 @@ export default function OnboardingModal({
 
           {/* Section 4: Reading Pace */}
           <div>
-            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-charcoal-700 mb-2">
+            <label className="block text-[11px] font-sans font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
               Morning Reading Pace
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -288,17 +288,17 @@ export default function OnboardingModal({
                     key={pace.id}
                     type="button"
                     onClick={() => setReadingPace(pace.id as any)}
-                    className={`p-3 rounded border text-left transition-all ${
+                    className={`p-3 rounded border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-forest-50 border-forest-600 text-charcoal-900 shadow-2xs'
-                        : 'bg-ivory-50/80 border-ivory-200 text-charcoal-600 hover:border-ivory-300'
+                        ? 'bg-[var(--accent-subtle)] border-[var(--accent-primary)] text-[var(--text-primary)] shadow-2xs'
+                        : 'bg-[var(--bg-surface-elevated)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-sans font-bold">{pace.label}</span>
-                      <span className="text-[10px] font-mono text-forest-700 font-semibold">{pace.time}</span>
+                      <span className="text-[10px] font-mono text-[var(--accent-primary)] font-semibold">{pace.time}</span>
                     </div>
-                    <p className="text-[11px] text-charcoal-500 font-serif leading-tight">{pace.desc}</p>
+                    <p className="text-[11px] text-[var(--text-muted)] font-serif leading-tight">{pace.desc}</p>
                   </button>
                 );
               })}
@@ -307,8 +307,8 @@ export default function OnboardingModal({
         </div>
 
         {/* Footer actions */}
-        <div className="pt-4 border-t border-ivory-300 flex items-center justify-between">
-          <span className="text-xs font-serif text-charcoal-500 italic">
+        <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
+          <span className="text-xs font-serif text-[var(--text-muted)] italic">
             Deterministic rule-based ranking • Saved locally
           </span>
           <div className="flex items-center space-x-3">
@@ -316,7 +316,7 @@ export default function OnboardingModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-sans font-medium text-charcoal-600 hover:text-charcoal-900"
+                className="px-4 py-2 text-xs font-sans font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
               >
                 Cancel
               </button>
@@ -325,9 +325,9 @@ export default function OnboardingModal({
               id="btn-save-preferences-confirm"
               type="button"
               onClick={handleSave}
-              className="px-6 py-2.5 bg-forest-600 hover:bg-forest-700 text-white rounded text-sm font-sans font-semibold tracking-wide shadow-xs transition-colors flex items-center space-x-2"
+              className="px-6 py-2.5 bg-[var(--accent-primary)] hover:opacity-90 text-white rounded text-sm font-sans font-bold tracking-wide shadow-xs transition-opacity flex items-center space-x-2 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-ivory-200" />
+              <Sparkles className="w-4 h-4 text-white" />
               <span>{isFirstVisit ? 'Generate My Morning Edition' : 'Update & Re-Rank Daymark'}</span>
             </button>
           </div>

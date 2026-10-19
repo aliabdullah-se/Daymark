@@ -1,11 +1,11 @@
 {
   "users": [
     {
-      "id": "judge-nascon-2026",
-      "name": "Judge Vance",
-      "email": "judge@nascon2026.org",
-      "password": "judge-access-2026",
-      "paperTitle": "THE BROADSIDE DISPATCH",
+      "id": "demo-reader",
+      "name": "Arthur Vance",
+      "email": "reader@daymark.internal",
+      "password": "demo-reader-2026",
+      "paperTitle": "DAYMARK",
       "createdAt": "2026-10-17T06:00:00.000Z",
       "isVerified": true,
       "otpCode": "742891",
@@ -15,6 +15,33 @@
   "interactions": [
     {
       "userId": "judge-nascon-2026",
+      "articleId": "art_d094hx",
+      "articleTitle": "At Victoria’s Secret’s 2026 Fashion Show, an Old Stereotype of Sexy",
+      "category": "business",
+      "action": "upvote",
+      "timestamp": "2026-10-19T19:06:43.429Z",
+      "id": "act_1792436803432_ymw8"
+    },
+    {
+      "userId": "judge-nascon-2026",
+      "articleId": "art_f79xud",
+      "articleTitle": "How a Trillion-Dollar Industry Launders Illegal Gold",
+      "category": "world",
+      "action": "upvote",
+      "timestamp": "2026-10-19T18:59:35.416Z",
+      "id": "act_1792436375419_tpvu"
+    },
+    {
+      "userId": "demo-reader",
+      "articleId": "art_8vjluj",
+      "articleTitle": "Singing, Dancing and Getting Dumped by A.I. on Korean TV",
+      "category": "world",
+      "action": "upvote",
+      "timestamp": "2026-10-18T09:25:33.370Z",
+      "id": "act_1792315533375_gnc4"
+    },
+    {
+      "userId": "demo-reader",
       "articleId": "art_1792251971971",
       "articleTitle": "TSMC Ramps 2nm Fabrication Nodes with Extreme Ultraviolet Lithography",
       "category": "technology",
@@ -24,9 +51,9 @@
     }
   ],
   "preferences": {
-    "judge-nascon-2026": {
-      "readerName": "Judge Vance",
-      "newspaperTitle": "THE BROADSIDE DISPATCH",
+    "demo-reader": {
+      "readerName": "Arthur Vance",
+      "newspaperTitle": "DAYMARK",
       "selectedTopics": [
         "technology",
         "world",
@@ -45,7 +72,23 @@
   },
   "savedEditions": {},
   "suggestedInterests": {
-    "judge-nascon-2026": [
+    "demo-reader": [
+      {
+        "id": "sug_graph_1792315533393_0",
+        "topic": "Critical Mineral Supply Chains",
+        "confidence": 80,
+        "reason": "Triggered by attention to international resource competition and trade treaties.",
+        "category": "world",
+        "suggestedAt": "2026-10-18T09:25:33.393Z"
+      },
+      {
+        "id": "sug_graph_1792315533393_1",
+        "topic": "Maritime Straits & Global Shipping Chokepoints",
+        "confidence": 93,
+        "reason": "Reflects interest in geopolitical maritime corridors and global economic flow.",
+        "category": "world",
+        "suggestedAt": "2026-10-18T09:25:33.393Z"
+      },
       {
         "id": "sug_graph_1792251971973_0",
         "topic": "Agentic AI & Tool-Use Systems",
@@ -63,7 +106,7 @@
         "suggestedAt": "2026-10-17T15:46:11.973Z"
       },
       {
-        "id": "sug-judge-1",
+        "id": "sug-demo-1",
         "topic": "Silicon Sovereignty & Fabs",
         "confidence": 94,
         "reason": "Inferred from deep reading of semiconductor trade and AI compute scaling.",
@@ -71,7 +114,7 @@
         "suggestedAt": "2026-10-17T15:43:49.356Z"
       },
       {
-        "id": "sug-judge-2",
+        "id": "sug-demo-2",
         "topic": "Autonomous AI Agents",
         "confidence": 89,
         "reason": "Frequent engagement with machine learning systems and workflow autonomy.",
@@ -79,17 +122,51 @@
         "suggestedAt": "2026-10-17T15:43:49.356Z"
       },
       {
-        "id": "sug-judge-3",
+        "id": "sug-demo-3",
         "topic": "Clean Nuclear SMRs",
         "confidence": 83,
         "reason": "Detected interest at intersection of clean energy and data center grid demands.",
         "category": "environment",
         "suggestedAt": "2026-10-17T15:43:49.356Z"
       }
+    ],
+    "judge-nascon-2026": [
+      {
+        "id": "sug_graph_1792436803876_0",
+        "topic": "AI Infrastructure Capital Expenditures",
+        "confidence": 92,
+        "reason": "Derived from reading corporate balance sheets and cloud data center buildouts.",
+        "category": "business",
+        "suggestedAt": "2026-10-19T19:06:43.876Z"
+      },
+      {
+        "id": "sug_graph_1792436803876_1",
+        "topic": "Decentralized Energy Grid Markets",
+        "confidence": 80,
+        "reason": "Matches economic interest in utility-scale renewables and energy deregulation.",
+        "category": "business",
+        "suggestedAt": "2026-10-19T19:06:43.876Z"
+      },
+      {
+        "id": "sug_graph_1792436375834_0",
+        "topic": "Critical Mineral Supply Chains",
+        "confidence": 93,
+        "reason": "Triggered by attention to international resource competition and trade treaties.",
+        "category": "world",
+        "suggestedAt": "2026-10-19T18:59:35.834Z"
+      },
+      {
+        "id": "sug_graph_1792436375834_1",
+        "topic": "Maritime Straits & Global Shipping Chokepoints",
+        "confidence": 83,
+        "reason": "Reflects interest in geopolitical maritime corridors and global economic flow.",
+        "category": "world",
+        "suggestedAt": "2026-10-19T18:59:35.834Z"
+      }
     ]
   },
   "otps": {
-    "judge@nascon2026.org": {
+    "reader@daymark.internal": {
       "code": "742891",
       "expiresAt": "2026-10-17T15:58:49.374Z",
       "verified": true

@@ -199,7 +199,7 @@ export function dbVerifyOtp(email: string, code: string): { success: boolean; me
       id: `usr_${Date.now()}`,
       name: clean.split('@')[0],
       email: clean,
-      paperTitle: `THE ${clean.split('@')[0].toUpperCase()} GAZETTE`,
+      paperTitle: 'DAYMARK',
       createdAt: new Date().toISOString(),
       isVerified: true,
     };

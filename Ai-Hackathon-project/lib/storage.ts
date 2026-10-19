@@ -8,8 +8,11 @@ import {
   LearningSignal,
   DEMO_JUDGE_USER,
 } from '@/types/news';
+import { AppearanceSettings, DEFAULT_APPEARANCE_SETTINGS } from '@/types/settings';
 
-export { DEMO_JUDGE_USER };
+export { DEMO_JUDGE_USER, DEFAULT_APPEARANCE_SETTINGS };
+export type { AppearanceSettings };
+
 
 const USERS_KEY = 'daymark_users';
 const CURRENT_USER_KEY = 'daymark_current_user';
@@ -51,8 +54,23 @@ export function getStoredUsers(): UserAccount[] {
       return initial;
     }
     const parsed: UserAccount[] = JSON.parse(raw);
+    let mutated = false;
+    parsed.forEach((u) => {
+      if (
+        u.paperTitle &&
+        (u.paperTitle.toUpperCase().includes('BROADSIDE') ||
+          u.paperTitle.toUpperCase().includes('DISPATCH') ||
+          u.paperTitle.toUpperCase().includes('MORNING CHRONICLE'))
+      ) {
+        u.paperTitle = 'DAYMARK';
+        mutated = true;
+      }
+    });
     if (!parsed.some((u) => u.email.toLowerCase() === DEMO_JUDGE_USER.email.toLowerCase())) {
       parsed.push(DEMO_JUDGE_USER);
+      mutated = true;
+    }
+    if (mutated) {
       localStorage.setItem(USERS_KEY, JSON.stringify(parsed));
     }
     return parsed;
@@ -83,7 +101,18 @@ export function getCurrentUser(): UserAccount | null {
   try {
     const raw = localStorage.getItem(CURRENT_USER_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const user: UserAccount = JSON.parse(raw);
+    if (
+      user &&
+      user.paperTitle &&
+      (user.paperTitle.toUpperCase().includes('BROADSIDE') ||
+        user.paperTitle.toUpperCase().includes('DISPATCH') ||
+        user.paperTitle.toUpperCase().includes('MORNING CHRONICLE'))
+    ) {
+      user.paperTitle = 'DAYMARK';
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    }
+    return user;
   } catch (e) {
     console.error('Failed to get current user:', e);
     return null;
@@ -105,6 +134,10 @@ export function setCurrentUser(user: UserAccount | null): void {
 
 export function logoutUser(): void {
   setCurrentUser(null);
+  if (typeof document !== 'undefined') {
+    document.cookie = 'daymark_token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'daymark_otp_verified=; path=/; max-age=0; SameSite=Lax';
+  }
 }
 
 // 2. PREFERENCES STORAGE
@@ -113,7 +146,17 @@ export function getStoredPreferences(): UserPreferences {
   try {
     const raw = localStorage.getItem(PREFS_KEY) || localStorage.getItem(LEGACY_PREFS_KEY);
     if (!raw) return DEFAULT_PREFERENCES;
-    return { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) };
+    const prefs: UserPreferences = { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) };
+    if (
+      !prefs.newspaperTitle ||
+      prefs.newspaperTitle.toUpperCase().includes('BROADSIDE') ||
+      prefs.newspaperTitle.toUpperCase().includes('DISPATCH') ||
+      prefs.newspaperTitle.toUpperCase().includes('MORNING CHRONICLE')
+    ) {
+      prefs.newspaperTitle = 'DAYMARK';
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    }
+    return prefs;
   } catch (e) {
     console.error('Failed to load preferences from storage:', e);
     return DEFAULT_PREFERENCES;
@@ -377,3 +420,45 @@ export function deleteStoredEdition(editionId: string): void {
     console.error('Failed to delete edition from storage:', e);
   }
 }
+
+// 6. APPEARANCE & CUSTOMIZATION SETTINGS
+const SETTINGS_KEY = 'daymark_appearance_settings';
+
+export function getStoredAppearanceSettings(): AppearanceSettings {
+  if (typeof window === 'undefined') return DEFAULT_APPEARANCE_SETTINGS;
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_APPEARANCE_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_APPEARANCE_SETTINGS,
+      ...parsed,
+      bodyFontSize: typeof parsed.bodyFontSize === 'number'
+        ? Math.min(Math.max(parsed.bodyFontSize, 14), 22)
+        : DEFAULT_APPEARANCE_SETTINGS.bodyFontSize,
+    };
+  } catch (e) {
+    console.error('Failed to load appearance settings from storage:', e);
+    return DEFAULT_APPEARANCE_SETTINGS;
+  }
+}
+
+export function saveStoredAppearanceSettings(settings: AppearanceSettings): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('Failed to save appearance settings to storage:', e);
+  }
+}
+
+export function resetStoredAppearanceSettings(): AppearanceSettings {
+  if (typeof window === 'undefined') return DEFAULT_APPEARANCE_SETTINGS;
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULT_APPEARANCE_SETTINGS));
+  } catch (e) {
+    console.error('Failed to reset appearance settings:', e);
+  }
+  return DEFAULT_APPEARANCE_SETTINGS;
+}
+

@@ -105,14 +105,17 @@ export interface SavedEdition {
   editionNumber?: string;
 }
 
-export const DEMO_JUDGE_USER: UserAccount = {
-  id: 'judge-nascon-2026',
-  name: 'Judge Vance',
-  email: 'judge@nascon2026.org',
-  password: 'judge-access-2026',
-  paperTitle: 'THE BROADSIDE DISPATCH',
+export const DEMO_USER: UserAccount = {
+  id: 'demo-reader',
+  name: 'Arthur Vance',
+  email: 'reader@daymark.internal',
+  password: 'demo-reader-2026',
+  paperTitle: 'DAYMARK',
   createdAt: '2026-10-17T06:00:00.000Z',
 };
+
+// Aliased for internal backwards compatibility
+export const DEMO_JUDGE_USER: UserAccount = DEMO_USER;
 
 export interface TopicMeta {
   id: NewsTopic;

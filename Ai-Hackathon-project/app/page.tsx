@@ -2,7 +2,17 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Article, UserPreferences, UserFeedback, SavedEdition, NewsTopic, DEFAULT_PREFERENCES, AVAILABLE_TOPICS, UserAccount, SuggestedInterest } from '@/types/news';
+import {
+  Article,
+  UserPreferences,
+  UserFeedback,
+  SavedEdition,
+  NewsTopic,
+  DEFAULT_PREFERENCES,
+  AVAILABLE_TOPICS,
+  UserAccount,
+  SuggestedInterest,
+} from '@/types/news';
 import { rankArticles, ScoredArticle } from '@/lib/ranking';
 import {
   getStoredPreferences,
@@ -14,6 +24,9 @@ import {
   deleteStoredEdition,
   INITIAL_FEEDBACK,
   getCurrentUser,
+  setCurrentUser,
+  saveStoredUser,
+  DEMO_JUDGE_USER,
   logoutUser,
   addLearningSignal,
 } from '@/lib/storage';
@@ -25,11 +38,33 @@ import WhyThisModal from '@/components/WhyThisModal';
 import SavedEditionsDrawer from '@/components/SavedEditionsDrawer';
 import PrintPreviewModal from '@/components/PrintPreviewBanner';
 import GeminiKeyModal from '@/components/GeminiKeyModal';
+import SettingsModal from '@/components/SettingsModal';
+import AppSidebar from '@/components/AppSidebar';
+import ArticleReaderModal from '@/components/ArticleReaderModal';
+import StickyAudioPlayer from '@/components/StickyAudioPlayer';
+import { useSettings } from '@/components/ThemeProvider';
 import { LoadingNewspaper, EmptyState, ErrorState } from '@/components/StatusStates';
 import { getGeminiApiKey, fetchGeminiTakeaways } from '@/lib/gemini';
-import { Sparkles, Bookmark, Search, RotateCcw, Clock, Quote, Printer, ShieldCheck, Compass, ExternalLink, BrainCircuit, Plus, X } from 'lucide-react';
+import {
+  Sparkles,
+  Bookmark,
+  Search,
+  RotateCcw,
+  Clock,
+  Printer,
+  Newspaper,
+  ShieldCheck,
+  Compass,
+  ExternalLink,
+  BrainCircuit,
+  Plus,
+  X,
+  Sliders,
+} from 'lucide-react';
 
-export default function MorningChroniclePage() {
+export default function DaymarkBroadsheetPage() {
+  const { settings, isSettingsOpen, setIsSettingsOpen, openSettings, closeSettings } = useSettings();
+
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [feedback, setFeedback] = useState<UserFeedback>(INITIAL_FEEDBACK);
   const [savedEditions, setSavedEditions] = useState<SavedEdition[]>([]);
@@ -55,6 +90,8 @@ export default function MorningChroniclePage() {
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
   const [aiTakeaways, setAiTakeaways] = useState<any[] | null>(null);
   const [isAiTakeawaysLoading, setIsAiTakeawaysLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [readingArticle, setReadingArticle] = useState<ScoredArticle | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -65,10 +102,50 @@ export default function MorningChroniclePage() {
 
   // Load persisted user state on mount
   useEffect(() => {
+    let user = getCurrentUser();
+
+    // Support instant demo via URL param (?demo=reader, ?demo=true, ?demo=judge)
+    const demoVal = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('demo') : null;
+    const isDemoParam = demoVal === 'judge' || demoVal === 'reader' || demoVal === 'true';
+    if (!user && isDemoParam) {
+      saveStoredUser(DEMO_JUDGE_USER);
+      setCurrentUser(DEMO_JUDGE_USER);
+      user = DEMO_JUDGE_USER;
+      document.cookie = `daymark_token=${btoa(
+        JSON.stringify({ id: DEMO_JUDGE_USER.id, email: DEMO_JUDGE_USER.email, name: DEMO_JUDGE_USER.name })
+      )}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `daymark_otp_verified=true; path=/; max-age=604800; SameSite=Lax`;
+    }
+
+    // Must be logged in before viewing broadsheet or triggering onboarding
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+
     const loadedPrefs = getStoredPreferences();
+    if (
+      loadedPrefs.newspaperTitle &&
+      (loadedPrefs.newspaperTitle.toUpperCase().includes('BROADSIDE') ||
+        loadedPrefs.newspaperTitle.toUpperCase().includes('DISPATCH') ||
+        loadedPrefs.newspaperTitle.toUpperCase().includes('MORNING CHRONICLE'))
+    ) {
+      loadedPrefs.newspaperTitle = 'DAYMARK';
+      saveStoredPreferences(loadedPrefs);
+    }
+    if (
+      user &&
+      user.paperTitle &&
+      (user.paperTitle.toUpperCase().includes('BROADSIDE') ||
+        user.paperTitle.toUpperCase().includes('DISPATCH') ||
+        user.paperTitle.toUpperCase().includes('MORNING CHRONICLE'))
+    ) {
+      user.paperTitle = 'DAYMARK';
+      saveStoredUser(user);
+    }
+
     const loadedFeedback = getStoredFeedback();
     const loadedEditions = getStoredEditions();
-    const user = getCurrentUser();
 
     setPreferences(loadedPrefs);
     setFeedback(loadedFeedback);
@@ -77,7 +154,7 @@ export default function MorningChroniclePage() {
     setHasGeminiKey(!!getGeminiApiKey());
 
     // Fetch real-time AI personalized suggested interests
-    fetch(`/api/ai/learn?userId=${user?.id || 'judge-nascon-2026'}`)
+    fetch(`/api/ai/learn?userId=${user.id || 'demo-reader'}`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.suggestions) {
@@ -86,7 +163,7 @@ export default function MorningChroniclePage() {
       })
       .catch(() => {});
 
-    // If user has never onboarded, show onboarding prompt
+    // If authenticated user has never onboarded, show onboarding prompt
     if (!loadedPrefs.onboarded) {
       setIsOnboardingOpen(true);
     }
@@ -107,6 +184,9 @@ export default function MorningChroniclePage() {
     logoutUser();
     setCurrentUser(null);
     showToast('Signed out of subscriber account');
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 400);
   };
 
   const handleSynthesizeWithGemini = async () => {
@@ -137,9 +217,10 @@ export default function MorningChroniclePage() {
   const fetchNews = useCallback(async (topicsToFetch?: NewsTopic[]) => {
     try {
       setError(null);
-      const url = topicsToFetch && topicsToFetch.length > 0
-        ? `/api/news?topics=${topicsToFetch.join(',')}`
-        : '/api/news';
+      const url =
+        topicsToFetch && topicsToFetch.length > 0
+          ? `/api/news?topics=${topicsToFetch.join(',')}`
+          : '/api/news';
 
       const res = await fetch(url);
       if (!res.ok) {
@@ -200,18 +281,94 @@ export default function MorningChroniclePage() {
     return filtered;
   }, [activeEdition, rawArticles, preferences, feedback, selectedTopicFilter, searchQuery, showBookmarksOnly]);
 
+  // Contextual Edition Metadata for the currently viewed newspaper edition
+  const currentEditionMeta = useMemo(() => {
+    if (activeEdition) {
+      return {
+        id: activeEdition.id,
+        title: activeEdition.title || preferences.newspaperTitle || 'DAYMARK',
+        editionName: `${activeEdition.editionNumber || 'Archived Edition'} (${activeEdition.dateStr})`,
+        editionSubhead: 'Historical Broadsheet Snapshot',
+        date: activeEdition.dateStr,
+        count: rankedArticles.length,
+        isArchive: true,
+      };
+    }
+    if (showBookmarksOnly) {
+      return {
+        id: 'bookmarks',
+        title: preferences.newspaperTitle || 'DAYMARK',
+        editionName: 'Saved Clippings Edition',
+        editionSubhead: 'Curated Personal Reader Archive',
+        date: new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        count: rankedArticles.length,
+        isArchive: false,
+      };
+    }
+    const topicLabels: Record<NewsTopic, { name: string; subhead: string }> = {
+      technology: { name: 'Technology & AI Edition', subhead: 'Frontiers in Computing, Intelligence & Engineering' },
+      world: { name: 'World Affairs Edition', subhead: 'Global Geopolitics, Diplomacy & International Reports' },
+      business: { name: 'Markets & Business Edition', subhead: 'Global Finance, Economics, Commerce & Enterprise' },
+      science: { name: 'Science & Discovery Edition', subhead: 'Astrophysics, Biology, Exploration & Research' },
+      health: { name: 'Health & Medicine Edition', subhead: 'Public Health, Clinical Medicine & Longevity' },
+      environment: { name: 'Climate & Environment Edition', subhead: 'Ecosystems, Energy Transition & Earth Systems' },
+      culture: { name: 'Culture & Arts Edition', subhead: 'Criticism, Literature, Media & Modern Society' },
+      opinion: { name: 'Commentary & Opinion Edition', subhead: 'Perspectives, Analysis & Editorial Essays' },
+    };
+
+    const todayDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    if (selectedTopicFilter !== 'all' && topicLabels[selectedTopicFilter]) {
+      return {
+        id: selectedTopicFilter,
+        title: preferences.newspaperTitle || 'DAYMARK',
+        editionName: topicLabels[selectedTopicFilter].name,
+        editionSubhead: topicLabels[selectedTopicFilter].subhead,
+        date: todayDate,
+        count: rankedArticles.length,
+        isArchive: false,
+      };
+    }
+
+    return {
+      id: 'all',
+      title: preferences.newspaperTitle || 'DAYMARK',
+      editionName: 'Cover & Daily Broadsheet Edition',
+      editionSubhead: 'Comprehensive Morning Wire & Algorithmic Synthesis',
+      date: todayDate,
+      count: rankedArticles.length,
+      isArchive: false,
+    };
+  }, [activeEdition, showBookmarksOnly, selectedTopicFilter, rankedArticles.length, preferences.newspaperTitle]);
+
+  const handleTriggerEditionPrint = () => {
+    if (rankedArticles.length === 0) {
+      showToast('This edition contains no articles to export');
+      return;
+    }
+    setIsPrintModalOpen(true);
+  };
+
   // Lead, Secondary, and Wire splits
   const leadArticle = rankedArticles[0] || null;
   const secondaryArticles = rankedArticles.slice(1, 5);
   const wireBriefs = rankedArticles.slice(5, 12);
-  const sectionRemaining = rankedArticles.slice(12);
 
   // Synthesize Today's 3 Key Takeaways
   const keyTakeaways = useMemo(() => {
     return rankedArticles.slice(0, 3).map((art, idx) => {
-      const shortSummary = art.description.length > 130
-        ? art.description.slice(0, 125).trim() + '...'
-        : art.description;
+      const shortSummary =
+        art.description.length > 130 ? art.description.slice(0, 125).trim() + '...' : art.description;
       return {
         number: idx + 1,
         title: art.title,
@@ -250,8 +407,8 @@ export default function MorningChroniclePage() {
           dateStr: todayDateStr,
           savedAt: new Date().toISOString(),
           title: preferences.newspaperTitle || 'DAYMARK',
-          editionNumber: 'VOL. XII / NO. 42',
-          leadHeadline: rankedArticles[0]?.title || 'Daily Broadsheet Dispatch',
+          editionNumber: todayDateStr,
+          leadHeadline: rankedArticles[0]?.title || 'Daily Broadsheet Edition',
           articlesCount: rankedArticles.length,
           takeaways: keyTakeaways.map((t) => t.takeaway),
           articles: rankedArticles.slice(0, 15),
@@ -281,7 +438,10 @@ export default function MorningChroniclePage() {
     [rankedArticles, leadArticle]
   );
   const otherArticles = useMemo(
-    () => rankedArticles.filter((a) => !['technology', 'world', 'business', 'science'].includes(a.category) && a.id !== leadArticle?.id),
+    () =>
+      rankedArticles.filter(
+        (a) => !['technology', 'world', 'business', 'science'].includes(a.category) && a.id !== leadArticle?.id
+      ),
     [rankedArticles, leadArticle]
   );
 
@@ -428,7 +588,7 @@ export default function MorningChroniclePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: currentUser?.id || 'judge-nascon-2026',
+          userId: currentUser?.id || 'demo-reader',
           action,
           articleId: article.id,
           articleTitle: article.title,
@@ -478,7 +638,7 @@ export default function MorningChroniclePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'accept',
-          userId: currentUser?.id || 'judge-nascon-2026',
+          userId: currentUser?.id || 'demo-reader',
           topic,
         }),
       });
@@ -500,7 +660,7 @@ export default function MorningChroniclePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'dismiss',
-          userId: currentUser?.id || 'judge-nascon-2026',
+          userId: currentUser?.id || 'demo-reader',
           topic,
         }),
       });
@@ -535,8 +695,8 @@ export default function MorningChroniclePage() {
       dateStr: dateFormatted,
       savedAt: today.toISOString(),
       title: preferences.newspaperTitle || 'DAYMARK',
-      editionNumber: 'VOL. XII / NO. 42',
-      leadHeadline: rankedArticles[0]?.title || 'Morning Dispatch',
+      editionNumber: dateFormatted,
+      leadHeadline: rankedArticles[0]?.title || 'Morning Edition',
       articlesCount: rankedArticles.length,
       takeaways: keyTakeaways.map((t) => t.takeaway),
       articles: rankedArticles.slice(0, 18),
@@ -583,13 +743,14 @@ export default function MorningChroniclePage() {
 
     const topFive = rankedArticles.slice(0, 5);
     if (topFive.length === 0) {
-      showToast('No articles ready for audio dispatch');
+      showToast('No articles ready for audio briefing');
       return;
     }
 
     const readerGreeting = preferences.readerName || 'Reader';
-    const paperName = preferences.newspaperTitle || 'Daymark';
-    const textToSpeak = `Good morning, ${readerGreeting}. Here is your ${paperName} morning audio dispatch. Top stories today: ` +
+    const paperName = 'DAYMARK';
+    const textToSpeak =
+      `Good morning, ${readerGreeting}. Here is your ${paperName} morning audio briefing. Top stories today: ` +
       topFive
         .map((art, idx) => `Story ${idx + 1}, in ${art.category}: ${art.title}. Reporting by ${art.source.name}.`)
         .join(' ... Next story: ');
@@ -607,59 +768,118 @@ export default function MorningChroniclePage() {
     showToast('Playing morning audio briefing');
   };
 
-  // Print execution
+  // Contextual Print execution
   const executePrint = () => {
+    if (typeof window === 'undefined') return;
+    const originalTitle = document.title;
+    // Set document title so browser's "Save as PDF" suggests a clean edition-specific filename
+    document.title = `DAYMARK - ${currentEditionMeta.editionName} - ${currentEditionMeta.date}`;
     window.print();
+    // Restore title after print dialog closes
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1500);
   };
 
-  return (
-    <div className="min-h-screen bg-ivory-100 text-charcoal-900 flex flex-col font-serif selection:bg-forest-100 selection:text-forest-900">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-charcoal-900 text-ivory-50 text-xs font-sans px-4 py-2.5 rounded shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-2 no-print border border-charcoal-700">
-          <Sparkles className="w-3.5 h-3.5 text-forest-300" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+  // Dynamic layout & width calculation from settings
+  const readingWidthClass =
+    settings.readingWidth === 'narrow'
+      ? 'max-w-4xl'
+      : settings.readingWidth === 'wide'
+      ? 'max-w-7xl'
+      : 'max-w-6xl';
 
-      {/* Masthead */}
-      <Masthead
-        preferences={preferences}
-        currentUser={currentUser}
-        onSignOut={handleSignOut}
-        onOpenPreferences={() => setIsOnboardingOpen(true)}
-        onOpenEditions={() => setIsEditionsOpen(true)}
-        onPrint={() => setIsPrintModalOpen(true)}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
+  const secondaryLayoutClass =
+    settings.articleLayout === 'single'
+      ? 'grid grid-cols-1 gap-6'
+      : settings.articleLayout === 'three'
+      ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+      : 'grid grid-cols-1 md:grid-cols-2 gap-6';
+
+  const headlineFontClass =
+    settings.headlineFont === 'sans'
+      ? 'font-headline-sans'
+      : settings.headlineFont === 'classic'
+      ? 'font-headline-classic'
+      : 'font-headline-serif';
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] flex font-serif transition-colors duration-200">
+      {/* Persistent Left Sidebar for Desktop & Mobile Slide-over Drawer */}
+      <AppSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onOpenSettings={openSettings}
+        onSearch={(q) => setSearchQuery(q)}
         selectedTopicFilter={selectedTopicFilter}
-        onSelectTopicFilter={setSelectedTopicFilter}
-        onSaveCurrentEdition={handleSaveTodayEdition}
-        savedEditionsCount={savedEditions.length}
-        isPlayingAudio={isPlayingAudio}
-        onToggleAudio={handleToggleAudio}
-        onOpenGeminiKey={() => setIsGeminiModalOpen(true)}
-        hasGeminiKey={hasGeminiKey}
+        onSelectTopicFilter={(t) => setSelectedTopicFilter(t as any)}
       />
 
+      {/* Main Broadsheet Content Area */}
+      <div className="flex-1 min-w-0 flex flex-col lg:pl-64">
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-sans px-4 py-2.5 rounded shadow-2xl flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-2 no-print border border-[var(--border-strong)]">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* Masthead */}
+        <Masthead
+          preferences={preferences}
+          currentUser={currentUser}
+          onSignOut={handleSignOut}
+          onOpenPreferences={() => setIsOnboardingOpen(true)}
+          onOpenEditions={() => setIsEditionsOpen(true)}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          selectedTopicFilter={selectedTopicFilter}
+          onSelectTopicFilter={(topic) => {
+            setSelectedTopicFilter(topic);
+            if (showBookmarksOnly) setShowBookmarksOnly(false);
+          }}
+          onSaveCurrentEdition={handleSaveTodayEdition}
+          savedEditionsCount={savedEditions.length}
+          isPlayingAudio={isPlayingAudio}
+          onToggleAudio={handleToggleAudio}
+          onOpenGeminiKey={() => setIsGeminiModalOpen(true)}
+          hasGeminiKey={hasGeminiKey}
+          onOpenSettings={openSettings}
+          onToggleSidebar={() => setIsSidebarOpen(true)}
+          showBookmarksOnly={showBookmarksOnly}
+          onToggleBookmarks={() => setShowBookmarksOnly((prev) => !prev)}
+          savedArticlesCount={feedback.savedArticleIds?.length || 0}
+          onScrollToDiscover={() => {
+            setSelectedTopicFilter('all');
+            if (showBookmarksOnly) setShowBookmarksOnly(false);
+            setTimeout(() => {
+              const el = document.getElementById('outside-your-bubble');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
+          }}
+        />
+
       {/* Secondary Search & Filter Bar (Screen only) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full py-2.5 no-print">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-ivory-200/50 p-2.5 rounded border border-ivory-300">
+      <div className={`${readingWidthClass} mx-auto px-4 sm:px-6 w-full py-2.5 no-print`}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[var(--bg-surface-elevated)] p-2.5 rounded border border-[var(--border-subtle)]">
           {/* Search Box */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-3.5 h-3.5 text-charcoal-400 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-2.5" />
             <input
               id="search-articles-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter stories by subject or keyword..."
-              className="w-full pl-8 pr-3 py-1.5 bg-ivory-50 border border-ivory-300 rounded text-xs font-sans text-charcoal-900 placeholder-charcoal-400 focus:outline-hidden focus:ring-1 focus:ring-forest-600"
+              className="w-full pl-8 pr-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded text-xs font-sans text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-primary)]"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-2 text-charcoal-400 hover:text-charcoal-900 text-xs cursor-pointer"
+                className="absolute right-2.5 top-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs cursor-pointer"
               >
                 ×
               </button>
@@ -672,25 +892,25 @@ export default function MorningChroniclePage() {
               onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
               className={`flex items-center space-x-1.5 px-3 py-1 rounded border transition-colors cursor-pointer ${
                 showBookmarksOnly
-                  ? 'bg-forest-50 border-forest-300 text-forest-800 font-semibold'
-                  : 'bg-ivory-50 border-ivory-300 text-charcoal-700 hover:bg-ivory-200'
+                  ? 'bg-[var(--accent-subtle)] border-[var(--accent-primary)] text-[var(--accent-text)] font-bold'
+                  : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-subtle)]'
               }`}
             >
-              <Bookmark className="w-3.5 h-3.5 text-forest-600" />
+              <Bookmark className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
               <span>Saved Clippings ({feedback.savedArticleIds.length})</span>
             </button>
 
             {activeEdition && (
               <button
                 onClick={handleResetToLive}
-                className="flex items-center space-x-1 px-2.5 py-1 bg-forest-50 text-forest-700 border border-forest-200 rounded hover:bg-forest-100 font-medium cursor-pointer"
+                className="flex items-center space-x-1 px-2.5 py-1 bg-[var(--accent-subtle)] text-[var(--accent-primary)] border border-[var(--accent-border)] rounded hover:opacity-90 font-medium cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Exit Archive</span>
               </button>
             )}
 
-            <span className="text-charcoal-500 hidden md:inline">
+            <span className="text-[var(--text-muted)] hidden md:inline">
               Showing <strong>{rankedArticles.length}</strong> curated reports
             </span>
           </div>
@@ -698,7 +918,7 @@ export default function MorningChroniclePage() {
       </div>
 
       {/* Main Content Broadsheet */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 w-full flex-1 py-4 print-broadsheet">
+      <main className={`${readingWidthClass} mx-auto px-4 sm:px-6 w-full flex-1 py-4 print-broadsheet`}>
         {isLoading ? (
           <LoadingNewspaper />
         ) : error ? (
@@ -714,13 +934,84 @@ export default function MorningChroniclePage() {
           />
         ) : (
           <div>
+            {/* =========================================================================
+                EDITION-SPECIFIC MASTHEAD BAR & CONTEXTUAL PRINT / PDF CONTROL
+                Belongs to the specific newspaper edition currently being viewed.
+                ========================================================================= */}
+            <div className="no-print mb-6 pb-3 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 bg-[var(--bg-surface)] p-3 sm:p-4 rounded-lg border">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-9 h-9 rounded-md bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center shrink-0">
+                  <Newspaper className="w-5 h-5 text-[var(--accent-primary)]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--accent-subtle)] text-[var(--accent-text)] font-semibold border border-[var(--accent-border)]">
+                      {currentEditionMeta.isArchive ? 'Archived Edition' : 'Active Edition'}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)] font-serif italic truncate hidden sm:inline">
+                      {currentEditionMeta.date}
+                    </span>
+                  </div>
+                  <h2 className="font-headline text-lg sm:text-xl font-bold text-[var(--text-primary)] leading-tight truncate mt-0.5">
+                    {currentEditionMeta.editionName}
+                  </h2>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 shrink-0">
+                <span className="text-xs font-sans text-[var(--text-muted)] hidden md:inline">
+                  {rankedArticles.length} {rankedArticles.length === 1 ? 'story' : 'stories'}
+                </span>
+                {/* Contextual Edition Print / PDF Button */}
+                <button
+                  type="button"
+                  id="btn-print-edition"
+                  data-edition-id={currentEditionMeta.id}
+                  data-edition-name={currentEditionMeta.editionName}
+                  onClick={handleTriggerEditionPrint}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--border-strong)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] transition-all text-xs font-sans font-bold cursor-pointer shadow-xs group"
+                  title={`Print or Save PDF: ${currentEditionMeta.editionName}`}
+                >
+                  <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] group-hover:text-inherit shrink-0" />
+                  <span>Print / PDF</span>
+                </button>
+              </div>
+            </div>
+
+            {/* =========================================================================
+                PRINT-ONLY BROADSHEET MASTHEAD
+                Rendered strictly during browser print / PDF export of this edition.
+                ========================================================================= */}
+            <div className="print-only hidden print:block mb-8 pb-4 border-b-2 border-black font-serif">
+              <div className="flex items-center justify-between border-b border-black pb-1.5 mb-3 text-[10pt] font-sans font-bold uppercase tracking-widest text-black">
+                <span>DAYMARK</span>
+                <span>{currentEditionMeta.date}</span>
+                <span>{currentEditionMeta.editionName}</span>
+              </div>
+              <div className="text-center py-2">
+                <h1 className="font-headline text-5xl font-black uppercase tracking-tight text-black leading-none">
+                  DAYMARK
+                </h1>
+                <div className="text-sm italic font-serif text-black mt-1">
+                  Your world, clearly delivered.
+                </div>
+                <div className="mt-3 inline-block border-y border-black py-1 px-6 text-xs font-sans font-bold uppercase tracking-[0.2em] text-black">
+                  {currentEditionMeta.editionName} • {rankedArticles.length} Stories Included
+                </div>
+              </div>
+              <div className="flex items-center justify-between border-t border-black pt-1.5 mt-3 text-[8pt] font-mono uppercase tracking-wider text-black">
+                <span>Subscriber: {preferences.readerName || 'Personal Broadsheet'}</span>
+                <span>Desks: {preferences.selectedTopics.join(', ')}</span>
+                <span>Format: Broadsheet Archival PDF</span>
+              </div>
+            </div>
             {/* 1. TODAY'S 3 KEY TAKEAWAYS — THE MORNING BRIEFING BOX */}
             {keyTakeaways.length > 0 && selectedTopicFilter === 'all' && (
-              <section className="mb-8 p-5 sm:p-6 bg-white border border-ivory-300 rounded shadow-2xs print-break-inside-avoid">
-                <div className="flex items-center justify-between border-b border-ivory-200 pb-3 mb-4 flex-wrap gap-2">
+              <section className="mb-8 p-5 sm:p-6 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded shadow-2xs print-break-inside-avoid">
+                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 mb-4 flex-wrap gap-2">
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-forest-600 animate-pulse" />
-                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.25em] text-forest-700">
+                    <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.25em] text-[var(--accent-primary)]">
                       Executive Intelligence • 30-Second Morning Briefing
                     </span>
                   </div>
@@ -730,50 +1021,50 @@ export default function MorningChroniclePage() {
                       type="button"
                       onClick={handleSynthesizeWithGemini}
                       disabled={isAiTakeawaysLoading}
-                      className="flex items-center space-x-1 px-2.5 py-1 rounded bg-forest-50 hover:bg-forest-100 text-forest-800 border border-forest-200 text-xs font-sans font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                      className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[var(--accent-subtle)] hover:opacity-90 text-[var(--accent-text)] border border-[var(--accent-border)] text-xs font-sans font-semibold transition-colors cursor-pointer disabled:opacity-50"
                       title={hasGeminiKey ? 'Synthesize with Google Gemini 1.5 Flash' : 'Configure Free Gemini AI Key'}
                     >
-                      <Sparkles className={`w-3.5 h-3.5 text-forest-600 ${isAiTakeawaysLoading ? 'animate-spin' : ''}`} />
+                      <Sparkles className={`w-3.5 h-3.5 text-[var(--accent-primary)] ${isAiTakeawaysLoading ? 'animate-spin' : ''}`} />
                       <span>{isAiTakeawaysLoading ? 'Synthesizing...' : aiTakeaways ? 'Regenerate with Gemini' : 'Synthesize with Gemini AI'}</span>
                     </button>
                     {aiTakeaways && (
-                      <span className="text-[10px] bg-forest-100 text-forest-800 px-2 py-0.5 rounded font-mono font-medium">
+                      <span className="text-[10px] bg-[var(--accent-border)] text-[var(--accent-text)] px-2 py-0.5 rounded font-mono font-medium">
                         Gemini 1.5 Flash
                       </span>
                     )}
                   </div>
                 </div>
 
-                <h2 className="font-headline text-2xl font-bold text-charcoal-900 mb-4">
+                <h2 className={`${headlineFontClass} text-2xl font-bold text-[var(--text-primary)] mb-4`}>
                   Today&apos;s 3 Key Takeaways
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {(aiTakeaways || keyTakeaways).map((item) => (
                     <div
                       key={item.number}
-                      className="p-4 bg-ivory-50/80 border border-ivory-200 rounded flex flex-col justify-between"
+                      className="p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded flex flex-col justify-between"
                     >
                       <div>
-                        <div className="flex items-center justify-between text-[10px] font-sans text-forest-700 uppercase tracking-wider font-bold mb-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-sans text-[var(--accent-primary)] uppercase tracking-wider font-bold mb-1.5">
                           <span>Takeaway #{item.number}</span>
-                          <span className="text-charcoal-500 font-normal">[{item.category}]</span>
+                          <span className="text-[var(--text-muted)] font-normal">[{item.category}]</span>
                         </div>
-                        <h4 className="font-headline text-sm font-bold text-charcoal-900 leading-snug mb-2 hover:text-forest-700 transition-colors">
+                        <h4 className={`${headlineFontClass} text-sm font-bold text-[var(--text-primary)] leading-snug mb-2 hover:text-[var(--accent-primary)] transition-colors`}>
                           <a href={item.url} target="_blank" rel="noopener noreferrer">
                             {item.title}
                           </a>
                         </h4>
-                        <p className="font-serif text-xs text-charcoal-700 leading-relaxed">
+                        <p className="font-serif text-xs text-[var(--text-secondary)] leading-relaxed">
                           {item.takeaway}
                         </p>
                       </div>
-                      <div className="mt-3 pt-2 border-t border-ivory-200 flex items-center justify-between text-[10px] font-sans text-charcoal-500">
+                      <div className="mt-3 pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-sans text-[var(--text-muted)]">
                         <span>Via {item.source}</span>
                         <a
                           href={item.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-forest-700 font-semibold hover:underline"
+                          className="text-[var(--accent-primary)] font-semibold hover:underline"
                         >
                           Read Source →
                         </a>
@@ -786,24 +1077,24 @@ export default function MorningChroniclePage() {
 
             {/* 2. REAL-TIME AI INTEREST DISCOVERY & ADAPTIVE SUGGESTIONS BANNER */}
             {suggestedInterests.filter((s) => !s.dismissed && !s.accepted).length > 0 && selectedTopicFilter === 'all' && (
-              <section className="mb-8 p-5 sm:p-6 bg-[#F4F1EA] border border-ivory-300 rounded shadow-2xs print-break-inside-avoid">
-                <div className="flex items-center justify-between border-b border-ivory-200/80 pb-3 mb-3 flex-wrap gap-2">
+              <section className="mb-8 p-5 sm:p-6 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded shadow-2xs print-break-inside-avoid">
+                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 mb-3 flex-wrap gap-2">
                   <div className="flex items-center space-x-2">
-                    <BrainCircuit className="w-4 h-4 text-forest-700 animate-pulse" />
-                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.2em] text-forest-800">
+                    <BrainCircuit className="w-4 h-4 text-[var(--accent-primary)] animate-pulse" />
+                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.2em] text-[var(--accent-primary)]">
                       Real-Time AI Interest Discovery • Adaptive Editorial Engine
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono bg-forest-100 text-forest-800 px-2 py-0.5 rounded font-semibold">
+                  <span className="text-[10px] font-mono bg-[var(--accent-subtle)] text-[var(--accent-text)] px-2 py-0.5 rounded font-semibold border border-[var(--accent-border)]">
                     Learns in real-time as you read
                   </span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-1">
-                  <h3 className="font-headline text-xl font-bold text-charcoal-900">
+                  <h3 className={`${headlineFontClass} text-xl font-bold text-[var(--text-primary)]`}>
                     Emerging Curiosities Tailored to Your Live Reading Signals
                   </h3>
-                  <span className="text-xs text-charcoal-500 font-serif italic">
+                  <span className="text-xs text-[var(--text-muted)] font-serif italic">
                     Click + to adopt into your daily newspaper desks
                   </span>
                 </div>
@@ -815,28 +1106,28 @@ export default function MorningChroniclePage() {
                     .map((sug) => (
                       <div
                         key={sug.id}
-                        className="p-3.5 bg-white border border-ivory-300 rounded flex flex-col justify-between hover:border-forest-400 transition-colors shadow-2xs"
+                        className="p-3.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded flex flex-col justify-between hover:border-[var(--accent-primary)] transition-colors shadow-2xs"
                       >
                         <div>
                           <div className="flex items-center justify-between text-[10px] font-sans uppercase tracking-wider mb-1.5">
-                            <span className="font-mono font-bold text-forest-700 bg-forest-50 px-1.5 py-0.5 rounded">
+                            <span className="font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-subtle)] px-1.5 py-0.5 rounded">
                               {sug.confidence}% Match
                             </span>
-                            <span className="text-charcoal-500 font-serif italic">{sug.category}</span>
+                            <span className="text-[var(--text-muted)] font-serif italic">{sug.category}</span>
                           </div>
-                          <h4 className="font-headline text-sm font-bold text-charcoal-900 leading-snug mb-1">
+                          <h4 className={`${headlineFontClass} text-sm font-bold text-[var(--text-primary)] leading-snug mb-1`}>
                             {sug.topic}
                           </h4>
-                          <p className="font-serif text-xs text-charcoal-600 leading-relaxed mb-3">
+                          <p className="font-serif text-xs text-[var(--text-secondary)] leading-relaxed mb-3">
                             {sug.reason}
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-2 pt-2 border-t border-ivory-200">
+                        <div className="flex items-center space-x-2 pt-2 border-t border-[var(--border-subtle)]">
                           <button
                             type="button"
                             onClick={() => handleAcceptSuggestedInterest(sug.topic, sug.category)}
-                            className="flex-1 py-1.5 px-2 bg-forest-700 hover:bg-forest-800 text-white rounded text-xs font-sans font-semibold flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+                            className="flex-1 py-1.5 px-2 bg-[var(--accent-primary)] hover:opacity-90 text-white rounded text-xs font-sans font-bold flex items-center justify-center space-x-1 transition-opacity cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Add to Desks</span>
@@ -844,7 +1135,7 @@ export default function MorningChroniclePage() {
                           <button
                             type="button"
                             onClick={() => handleDismissSuggestedInterest(sug.topic)}
-                            className="p-1.5 text-charcoal-400 hover:text-charcoal-700 rounded hover:bg-ivory-100 transition-colors cursor-pointer"
+                            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded hover:bg-[var(--bg-surface-subtle)] transition-colors cursor-pointer"
                             title="Dismiss suggestion"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -857,9 +1148,9 @@ export default function MorningChroniclePage() {
             )}
 
             {/* FRONT PAGE BROADSHEET LAYOUT */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b border-ivory-300">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b border-[var(--border-subtle)]">
               {/* PRIMARY BROADSHEET COLUMN (Cols 1-8) */}
-              <div className="lg:col-span-8 lg:border-r lg:border-ivory-300 lg:pr-8">
+              <div className="lg:col-span-8 lg:border-r lg:border-[var(--border-subtle)] lg:pr-8">
                 {/* 1. Lead Story */}
                 {leadArticle && (
                   <ArticleCard
@@ -870,23 +1161,24 @@ export default function MorningChroniclePage() {
                     onSkip={handleSkip}
                     onBookmark={handleBookmark}
                     onWhyThis={(a) => setWhyThisArticle(a)}
+                    onRead={(a) => setReadingArticle(a)}
                     isLiked={feedback.likedArticleIds.includes(leadArticle.id)}
                     isDisliked={feedback.dislikedArticleIds.includes(leadArticle.id)}
                     isBookmarked={feedback.savedArticleIds.includes(leadArticle.id)}
                   />
                 )}
 
-                {/* 2. Secondary Stories (2-column layout above the fold) */}
+                {/* 2. Secondary Stories */}
                 {secondaryArticles.length > 0 && (
                   <div>
                     <div className="flex items-center space-x-2 mb-4">
-                      <span className="font-sans font-bold text-[10px] uppercase tracking-[0.2em] text-forest-700">
+                      <span className="font-sans font-bold text-[10px] uppercase tracking-[0.2em] text-[var(--accent-primary)]">
                         Front Page Reports
                       </span>
-                      <div className="flex-1 h-px bg-ivory-300" />
+                      <div className="flex-1 h-px bg-[var(--border-subtle)]" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className={secondaryLayoutClass}>
                       {secondaryArticles.map((article) => (
                         <ArticleCard
                           key={article.id}
@@ -897,6 +1189,7 @@ export default function MorningChroniclePage() {
                           onSkip={handleSkip}
                           onBookmark={handleBookmark}
                           onWhyThis={(a) => setWhyThisArticle(a)}
+                          onRead={(a) => setReadingArticle(a)}
                           isLiked={feedback.likedArticleIds.includes(article.id)}
                           isDisliked={feedback.dislikedArticleIds.includes(article.id)}
                           isBookmarked={feedback.savedArticleIds.includes(article.id)}
@@ -910,15 +1203,13 @@ export default function MorningChroniclePage() {
               {/* SIDEBAR WIRE & EDITORIAL REFLECTIONS (Cols 9-12) */}
               <div className="lg:col-span-4 space-y-6">
                 {/* The Morning Wire */}
-                <div className="bg-white p-5 rounded border border-ivory-300 shadow-2xs">
-                  <div className="flex items-center justify-between border-b border-ivory-300 pb-2 mb-4">
-                    <span className="font-sans font-bold text-[10px] uppercase tracking-[0.2em] text-charcoal-900 flex items-center">
-                      <span className="w-1.5 h-1.5 bg-forest-600 rounded-full mr-1.5 animate-pulse" />
+                <div className="bg-[var(--bg-surface)] p-5 rounded border border-[var(--border-subtle)] shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 mb-4">
+                    <span className="font-sans font-bold text-[10px] uppercase tracking-[0.2em] text-[var(--text-primary)] flex items-center">
+                      <span className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full mr-1.5 animate-pulse" />
                       The Morning Wire
                     </span>
-                    <span className="text-[10px] font-sans text-charcoal-400">
-                      Live Dispatches
-                    </span>
+                    <span className="text-[10px] font-sans text-[var(--text-muted)]">Live Wire Reports</span>
                   </div>
 
                   <div className="space-y-4">
@@ -932,6 +1223,7 @@ export default function MorningChroniclePage() {
                         onSkip={handleSkip}
                         onBookmark={handleBookmark}
                         onWhyThis={(a) => setWhyThisArticle(a)}
+                        onRead={(a) => setReadingArticle(a)}
                         isLiked={feedback.likedArticleIds.includes(article.id)}
                         isDisliked={feedback.dislikedArticleIds.includes(article.id)}
                         isBookmarked={feedback.savedArticleIds.includes(article.id)}
@@ -941,16 +1233,16 @@ export default function MorningChroniclePage() {
                 </div>
 
                 {/* Daily Reflection Box */}
-                <div className="bg-ivory-50 border border-ivory-300 p-5 rounded shadow-2xs text-center">
-                  <span className="text-[10px] font-sans font-bold uppercase tracking-[0.25em] text-forest-700 block mb-2">
+                <div className="bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] p-5 rounded shadow-2xs text-center">
+                  <span className="text-[10px] font-sans font-bold uppercase tracking-[0.25em] text-[var(--accent-primary)] block mb-2">
                     Daily Reflection
                   </span>
-                  <blockquote className="font-serif italic text-sm text-charcoal-800 leading-relaxed">
+                  <blockquote className="font-serif italic text-sm text-[var(--text-primary)] leading-relaxed">
                     &ldquo;Knowledge becomes wisdom only when balanced by diverse perspectives and quiet contemplation.&rdquo;
                   </blockquote>
-                  <div className="mt-3 pt-2.5 border-t border-ivory-200 flex items-center justify-between text-[11px] font-sans text-charcoal-500">
-                    <span>Daymark Editorial Desk</span>
-                    <span className="font-mono text-[10px]">Issue No. 42</span>
+                  <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-sans text-[var(--text-muted)]">
+                    <span>DAYMARK Editorial Desk</span>
+                    <span className="font-serif italic text-[11px] text-[var(--text-muted)]">Daily Edition</span>
                   </div>
                 </div>
               </div>
@@ -958,48 +1250,51 @@ export default function MorningChroniclePage() {
 
             {/* 3. OUTSIDE YOUR BUBBLE (BLINDSPOT SECTION) */}
             {blindspotArticle && selectedTopicFilter === 'all' && (
-              <section className="my-10 p-6 bg-forest-50/70 border border-forest-200 rounded print-break-inside-avoid">
-                <div className="flex flex-wrap items-center justify-between border-b border-forest-200/80 pb-3 mb-4 gap-2">
+              <section id="outside-your-bubble" className="my-10 p-6 bg-[var(--accent-subtle)] border border-[var(--accent-border)] rounded-lg print-break-inside-avoid">
+                <div className="flex flex-wrap items-center justify-between border-b border-[var(--accent-border)] pb-3 mb-4 gap-2">
                   <div className="flex items-center space-x-2">
-                    <Compass className="w-4 h-4 text-forest-700" />
-                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.2em] text-forest-800">
+                    <Compass className="w-4 h-4 text-[var(--accent-primary)]" />
+                    <span className="font-sans font-bold text-[11px] uppercase tracking-[0.2em] text-[var(--accent-text)]">
                       Outside Your Bubble • Intellectual Blindspot Breaker
                     </span>
                   </div>
-                  <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-forest-100 text-forest-800 font-medium border border-forest-200">
+                  <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold border border-[var(--accent-border)]">
                     Uncurated Desk: {blindspotArticle.category.toUpperCase()}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                   <div className="md:col-span-8">
-                    <span className="text-xs font-serif italic text-charcoal-600 mb-1 block">
+                    <span className="text-xs font-serif italic text-[var(--text-muted)] mb-1 block">
                       Curated outside your primary {preferences.selectedTopics.length} selected focus areas to challenge intellectual complacency:
                     </span>
-                    <h3 className="font-headline text-xl sm:text-2xl font-bold text-charcoal-900 leading-tight mb-2 hover:text-forest-700 transition-colors">
-                      <a href={blindspotArticle.url} target="_blank" rel="noopener noreferrer">
+                    <h3 className={`${headlineFontClass} text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight mb-2 hover:text-[var(--accent-primary)] transition-colors`}>
+                      <button
+                        type="button"
+                        onClick={() => setReadingArticle(blindspotArticle)}
+                        className="text-left cursor-pointer hover:text-[var(--accent-primary)]"
+                      >
                         {blindspotArticle.title}
-                      </a>
+                      </button>
                     </h3>
-                    <p className="font-serif text-sm text-charcoal-700 leading-relaxed">
+                    <p className="font-serif text-sm text-[var(--text-secondary)] leading-relaxed">
                       {blindspotArticle.description}
                     </p>
-                    <div className="flex items-center space-x-3 text-xs font-sans text-charcoal-500 mt-3">
-                      <span className="font-medium text-charcoal-800">Reporting by {blindspotArticle.source.name}</span>
+                    <div className="flex items-center space-x-3 text-xs font-sans text-[var(--text-muted)] mt-3">
+                      <span className="font-medium text-[var(--text-primary)]">Reporting by {blindspotArticle.source.name}</span>
                       <span>•</span>
                       <span>{blindspotArticle.readTimeMinutes} min read</span>
                     </div>
                   </div>
                   <div className="md:col-span-4 flex flex-col items-start md:items-end justify-center gap-2">
-                    <a
-                      href={blindspotArticle.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-charcoal-900 hover:bg-black text-ivory-50 text-xs font-sans font-semibold rounded flex items-center space-x-1.5 transition-colors cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => setReadingArticle(blindspotArticle)}
+                      className="px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-page)] text-xs font-sans font-bold rounded flex items-center space-x-1.5 transition-opacity hover:opacity-90 cursor-pointer"
                     >
                       <span>Read Outside Perspective</span>
                       <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                    <span className="text-[10px] font-serif italic text-charcoal-500">
+                    </button>
+                    <span className="text-[10px] font-serif italic text-[var(--text-muted)]">
                       Helps prevent algorithmic echo chambers
                     </span>
                   </div>
@@ -1020,6 +1315,7 @@ export default function MorningChroniclePage() {
                   onSkip={handleSkip}
                   onBookmark={handleBookmark}
                   onWhyThis={(a) => setWhyThisArticle(a)}
+                  onRead={(a) => setReadingArticle(a)}
                   likedIds={feedback.likedArticleIds}
                   dislikedIds={feedback.dislikedArticleIds}
                   bookmarkedIds={feedback.savedArticleIds}
@@ -1035,6 +1331,7 @@ export default function MorningChroniclePage() {
                   onSkip={handleSkip}
                   onBookmark={handleBookmark}
                   onWhyThis={(a) => setWhyThisArticle(a)}
+                  onRead={(a) => setReadingArticle(a)}
                   likedIds={feedback.likedArticleIds}
                   dislikedIds={feedback.dislikedArticleIds}
                   bookmarkedIds={feedback.savedArticleIds}
@@ -1050,6 +1347,7 @@ export default function MorningChroniclePage() {
                   onSkip={handleSkip}
                   onBookmark={handleBookmark}
                   onWhyThis={(a) => setWhyThisArticle(a)}
+                  onRead={(a) => setReadingArticle(a)}
                   likedIds={feedback.likedArticleIds}
                   dislikedIds={feedback.dislikedArticleIds}
                   bookmarkedIds={feedback.savedArticleIds}
@@ -1065,6 +1363,7 @@ export default function MorningChroniclePage() {
                   onSkip={handleSkip}
                   onBookmark={handleBookmark}
                   onWhyThis={(a) => setWhyThisArticle(a)}
+                  onRead={(a) => setReadingArticle(a)}
                   likedIds={feedback.likedArticleIds}
                   dislikedIds={feedback.dislikedArticleIds}
                   bookmarkedIds={feedback.savedArticleIds}
@@ -1081,6 +1380,7 @@ export default function MorningChroniclePage() {
                     onSkip={handleSkip}
                     onBookmark={handleBookmark}
                     onWhyThis={(a) => setWhyThisArticle(a)}
+                    onRead={(a) => setReadingArticle(a)}
                     likedIds={feedback.likedArticleIds}
                     dislikedIds={feedback.dislikedArticleIds}
                     bookmarkedIds={feedback.savedArticleIds}
@@ -1088,38 +1388,89 @@ export default function MorningChroniclePage() {
                 )}
               </div>
             )}
+
+            {/* Edition Bottom Bar with Contextual Print / PDF Button */}
+            <div className="no-print mt-12 pt-6 pb-2 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-sans text-[var(--text-secondary)]">
+              <div className="flex items-center space-x-2">
+                <span className="font-bold text-[var(--text-primary)]">{currentEditionMeta.editionName}</span>
+                <span>•</span>
+                <span>End of Edition ({rankedArticles.length} stories)</span>
+              </div>
+              <button
+                type="button"
+                id="btn-print-edition-bottom"
+                data-edition-id={currentEditionMeta.id}
+                onClick={handleTriggerEditionPrint}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-xs font-sans font-medium cursor-pointer shadow-xs"
+                title={`Print or Save PDF: ${currentEditionMeta.editionName}`}
+              >
+                <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
+                <span>Print / PDF — {currentEditionMeta.editionName}</span>
+              </button>
+            </div>
           </div>
         )}
       </main>
 
       {/* DAYMARK COLOPHON & FOOTER */}
-      <footer className="w-full bg-ivory-200/50 border-t border-ivory-300 py-10 mt-16 print-header">
+      <footer className="w-full bg-[var(--bg-surface-elevated)] border-t border-[var(--border-subtle)] py-10 mt-16 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <h4 className="font-headline text-2xl font-black text-charcoal-900 tracking-tight">
+          <h4 className={`${headlineFontClass} text-2xl font-black text-[var(--text-primary)] tracking-tight`}>
             {preferences.newspaperTitle || 'DAYMARK'}
           </h4>
-          <p className="text-xs font-serif italic text-charcoal-600 mt-1 max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs font-serif italic text-[var(--text-secondary)] mt-1 max-w-lg mx-auto leading-relaxed">
             Your world, clearly delivered. Personalized daily for {currentUser?.name || preferences.readerName || 'our readers'} • Sourced from BBC News, The New York Times, Ars Technica, and NPR.
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-[11px] font-sans text-charcoal-500 uppercase tracking-wider">
-            <span className="flex items-center text-forest-700 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-forest-600 mr-1" />
-              NaSCon &apos;26 Official Entry
-            </span>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs font-serif text-[var(--text-muted)]">
+            <Link href="/dashboard" className="text-[var(--accent-primary)] font-bold hover:underline">
+              Page Directory
+            </Link>
             <span>•</span>
-            <span>Zero Hallucination Policy</span>
+            <Link href="/archive" className="hover:text-[var(--text-primary)] transition-colors">
+              Archive
+            </Link>
             <span>•</span>
-            <span>Deterministic Scoring Algorithm</span>
+            <Link href="/profile" className="hover:text-[var(--text-primary)] transition-colors">
+              Reader Profile
+            </Link>
             <span>•</span>
-            <span>100% Client-Side Storage</span>
+            <Link href="/about" className="hover:text-[var(--text-primary)] transition-colors">
+              About Us
+            </Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-[var(--text-primary)] transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <span>Zero Tracking</span>
+            <span>•</span>
+            <span>100% Client-Side Sovereignty</span>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-ivory-300 text-[10px] text-charcoal-400 font-sans no-print">
-            Click &ldquo;Print / PDF&rdquo; to download an archival broadsheet or save as PDF.
+          <div className="mt-4 pt-4 border-t border-[var(--border-subtle)] text-[10px] text-[var(--text-muted)] font-sans no-print flex items-center justify-center space-x-3">
+            <span>Click &ldquo;Print / PDF&rdquo; to download an archival broadsheet or save as PDF.</span>
+            <span>•</span>
+            <button
+              onClick={openSettings}
+              className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer inline-flex items-center space-x-1"
+            >
+              <Sliders className="w-3 h-3 mr-0.5" />
+              <span>Customize Daymark</span>
+            </button>
           </div>
         </div>
       </footer>
+
+      {/* Customizable Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={closeSettings}
+        preferences={preferences}
+        onSavePreferences={handleSavePreferences}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        onShowToast={showToast}
+      />
 
       {/* Onboarding & Preferences Modal */}
       <OnboardingModal
@@ -1154,7 +1505,10 @@ export default function MorningChroniclePage() {
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
         onConfirmPrint={executePrint}
-        newspaperTitle={preferences.newspaperTitle}
+        newspaperTitle={preferences.newspaperTitle || 'DAYMARK'}
+        editionName={currentEditionMeta.editionName}
+        editionDate={currentEditionMeta.date}
+        articleCount={rankedArticles.length}
       />
 
       {/* Gemini AI Key Configuration Modal */}
@@ -1166,6 +1520,37 @@ export default function MorningChroniclePage() {
           showToast('Google Gemini API Key saved!');
         }}
       />
+
+      {/* Sticky Audio Briefing Player Bar */}
+      <StickyAudioPlayer
+        isPlaying={isPlayingAudio}
+        onTogglePlay={handleToggleAudio}
+        onStop={() => {
+          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+          }
+          setIsPlayingAudio(false);
+        }}
+        currentStoryTitle={rankedArticles[0]?.title || 'Morning Audio Briefing'}
+        sourceName={rankedArticles[0]?.source.name || 'DAYMARK Audio Wire'}
+      />
+
+      {/* Distraction-Free Editorial Article Reader Modal */}
+      <ArticleReaderModal
+        article={readingArticle}
+        onClose={() => setReadingArticle(null)}
+        onLike={handleLike}
+        onDislike={handleDislike}
+        onBookmark={handleBookmark}
+        onWhyThis={(a) => setWhyThisArticle(a)}
+        onSelectRelated={(a) => setReadingArticle(a)}
+        allArticles={rankedArticles}
+        isLiked={readingArticle ? feedback.likedArticleIds.includes(readingArticle.id) : false}
+        isDisliked={readingArticle ? feedback.dislikedArticleIds.includes(readingArticle.id) : false}
+        isBookmarked={readingArticle ? feedback.savedArticleIds.includes(readingArticle.id) : false}
+        onShowToast={showToast}
+      />
+      </div>
     </div>
   );
 }

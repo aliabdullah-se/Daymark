@@ -1,123 +1,541 @@
 # Daymark — Your world, clearly delivered.
 # NaSCon'26 Challenge: Personalized Digital Morning Newspaper
-# Progress & Handover Document
+# Comprehensive Project Progress, Architecture & Prompt Engineering Specification
 
-## 1. Zero-Budget Compliance Audit (PKR 0 Total Budget)
-- **Total Financial Expenditure**: PKR 0 / $0.00 USD.
-- **Credit Card / Payment Details**: None required or used at any point.
-- **News Data Ingestion**: 100% Free Public RSS Feeds (BBC News, The New York Times, Ars Technica, NPR News). No paid news APIs or subscriptions.
-- **AI / Personalization Engine**: 100% Free Transparent Rule-Based Ranking Engine (`lib/ranking.ts`). No paid OpenAI/Gemini/Anthropic tokens or API keys required.
-- **Audio Dispatch Engine**: 100% Free Native Browser Web Speech API (`SpeechSynthesis`). Zero external audio API costs or quotas.
-- **Database / Backend Storage**: 100% Free Browser `localStorage` (`lib/storage.ts`). No paid PostgreSQL, Supabase, Redis, or cloud storage instances.
-- **PDF Generation**: 100% Free Browser Native Print Engine (`@media print` in `globals.css`). No paid PDF generation services.
-- **Hosting & Deployment**: 100% Free Vercel Hobby Tier (or Render/Netlify Free Tiers). No credit card required, free `*.vercel.app` subdomain.
+Last Updated: October 2026
+Production Build: Next.js 14.2.35 (App Router, TypeScript, Tailwind CSS)
+Total Expenditure: PKR 0 / $0.00 USD (100% Zero-Budget Free-Tier Compliance)
 
-## 2. Platform Free-Tier Limits & Mitigations
-| Service | Free Tier Limits | Mitigation / Status |
-| :--- | :--- | :--- |
-| **Public RSS Feeds** | Rate limiting if queried excessively per second | Server-side 5-minute caching (`next: { revalidate: 300 }`) and 6s timeout abort controller to prevent rate-limit bans |
-| **Web Speech API** | Browser-dependent voice synthesizers | Native client-side speech synthesis; runs fully local with 0 network or subscription overhead |
-| **Vercel Hobby** | 100GB bandwidth/mo, 10s serverless function timeout, 100 deployment/day | Lightweight payload (<104KB), parallel RSS fetch finishes in ~600ms, well within all free limits |
-| **Browser Storage** | ~5MB localStorage quota per domain | Compact JSON storage; saved editions capped at 30 snapshots; clippings store IDs and metadata |
-| **Browser Print** | Dependent on client browser PDF driver | Standardized CSS print broadsheet rules, explicit dialog instructions for "Save as PDF" |
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1. Executive Product Overview & Brand Identity
+2. Zero-Budget Architectural Compliance (PKR 0 Total Budget)
+3. Full Route Inventory & Interactive Features
+4. Core Engine Implementations & Algorithmic Logic
+5. Authentication, Security & Judge Demo Access
+6. Data Persistence & Schemas (Client + Server)
+7. Verification & Production Build Audit
+8. High-Value Feature Expansion Opportunities (For Prompt Engineers)
+9. Prompt Engineering Directives & Implementation Contracts
 
-## 3. Implemented Multi-Page Architecture & Verification State
-- **Product Name**: Daymark
-- **Tagline**: "Your world, clearly delivered."
-- **Status**: Complete Multi-Page Broadsheet Web Experience, 100% Verified in Real Browser.
+================================================================================
+1. EXECUTIVE PRODUCT OVERVIEW & BRAND IDENTITY
+================================================================================
+Daymark reimagines the morning news routine as a finite, elegant, high-signal
+digital broadsheet. Instead of endless algorithmic dopamine feeds, Daymark delivers
+a personalized morning newspaper curated to the reader's intellectual lenses,
+complete with an executive 3-takeaway intelligence box, lead cover story, audio
+dispatch, and a deliberate "Outside Your Bubble" blindspot section to prevent
+echo chambers.
 
-### Routes Implemented & Verified:
-1. **`/` (Today's Live Morning Broadsheet)** [VERIFIED]:
-   - Top Masthead with Volume, Issue #, Date, Edition Title, "Curated for {User Name}", Audio Briefing toggle, and Print/PDF button.
-   - User session controls: "Signed in as {Name}", link to `(Brain)`, link to `Archive`, and "Sign Out" button.
-   - **"Today's 3 Key Takeaways" Box**: Prominently synthesized from top 3 stories for an instant 30-second morning intelligence briefing.
-   - Tide-inspired two-column Cover Story with oversized serif italic headline, narrative drop cap, and reporting byline.
-   - Front Page Reports 2-column grid and The Morning Wire fast-dispatch sidebar.
-   - **"Outside Your Bubble (Blindspot)" Section**: Automatically surfaces 1 story outside the reader's selected topics to challenge intellectual complacency and prevent echo chambers.
-   - Interactive Learning Controls: Thumbs Up, Thumbs Down, Skip/Dismiss (removes immediately and penalizes weight), and Save Clipping.
-2. **`/login` (Press Room Sign-In)** [VERIFIED]:
-   - Newspaper-themed sign-in with clear inline validation.
-   - **1-Click "Instant Demo Login (Judge Access)" Button**: Pre-authenticates `DEMO_JUDGE_USER` ("Judge Vance", "THE BROADSIDE DISPATCH") so hackathon judges can enter without typing.
-   - In-browser authentication against `daymark_users` stored in `localStorage`.
-3. **`/signup` (Subscription Desk)** [VERIFIED]:
+- Product Name: Daymark
+- Tagline: "Your world, clearly delivered."
+- Visual Aesthetic: Premium editorial broadsheet inspired by Tide, Reflecta, and
+  classic newsprint. Features warm ivory backgrounds (#F7F5EF), deep ink charcoal
+  typography (#20211F), forest green accents (#496653), serif display titles,
+  narrative drop caps, and authentic multi-column newspaper layouts.
+- Core Value: Finite reading experience (5, 15, or 30 minutes), transparent
+  explainable algorithmic ranking, zero ads, zero tracking, and zero subscription costs.
+
+================================================================================
+2. ZERO-BUDGET ARCHITECTURAL COMPLIANCE (PKR 0 TOTAL BUDGET)
+================================================================================
+Every subsystem was designed to strictly operate at $0.00 cost with no credit card:
+
+1. News Ingestion: 100% Free Public RSS Feeds (BBC News, The New York Times,
+   Ars Technica, NPR News). Fast parallel server-side fetch with 5-minute caching
+   (next: { revalidate: 300 }) and 6-second timeout abort controllers.
+2. AI / Executive Synthesis:
+   - Free Google Gemini 1.5 Flash via REST API (using free Google AI Studio keys).
+   - Deterministic Fallback Engine: If no key is provided or quota is exceeded,
+     all summaries, takeaways, and explanations run locally with zero latency.
+3. Audio Dispatch Engine: Native Browser Web Speech API (SpeechSynthesis). 100%
+   free, client-side, zero audio synthesis token limits or costs.
+4. Database & Storage:
+   - Server-Side: Atomic file-backed JSON database at `data/daymark_db.json` (`lib/db.ts`).
+   - Client-Side: Hydrated `localStorage` with cookie tokens for Next.js SSR middleware.
+5. PDF Broadsheet Export: Standardized browser `@media print` CSS engine in
+   `globals.css` formatted as a multi-column broadsheet.
+6. Hosting: Vercel Hobby Tier (or Render/Netlify free tiers) with zero operational cost.
+
+================================================================================
+3. FULL ROUTE INVENTORY & INTERACTIVE FEATURES
+================================================================================
+The application consists of 14 compiled routes and an edge middleware layer:
+
+1. `/` (Today's Live Morning Broadsheet) [PROTECTED]:
+   - Masthead: Volume number, issue date, custom paper title, reader greeting,
+     Audio Briefing player toggle, Print/PDF export, and account links.
+   - "Today's 3 Key Takeaways": Prominent executive intelligence box synthesized
+     from top stories for a 30-second briefing.
+   - Lead Cover Story: Oversized serif italic headline, drop cap, reading time pill,
+     topic badge, and byline.
+   - Front Page Reports: 2-column grid displaying ranked priority stories.
+   - The Morning Wire: Fast-dispatch sidebar for secondary wire reports.
+   - "Outside Your Bubble (Blindspot)": Algorithmic section deliberately presenting
+     1 high-quality story outside the user's selected domains to combat bias.
+   - Interactive Feedback Controls:
+     * Thumbs Up (Boosts topic affinity +1).
+     * Thumbs Down (Penalizes topic affinity -1).
+     * Skip / Dismiss (Removes article instantly and penalizes topic -1.5).
+     * Save Clipping (Saves to saved clippings registry).
+     * "Why this?" Modal: Detailed algorithmic breakdown of why the article was ranked.
+   - Gemini API Key Modal: In-browser key configuration with instant local storage.
+
+2. `/login` (Press Room Sign-In):
+   - Newspaper-themed authentication desk with inline validation.
+   - 1-Click "Instant Demo Login (Judge Access)": Pre-authenticates `DEMO_JUDGE_USER`
+     ("Judge Vance", "THE BROADSIDE DISPATCH") with cookies and local state.
+   - Direct link to 6-digit OTP verification desk (`/verify-otp`).
+
+3. `/signup` (Subscription Desk):
    - Fields: Full Name, Subscriber Email, Password, Custom Newspaper Title.
-   - Creates new subscriber record in `daymark_users`, activates session in `daymark_current_user`, and redirects to `/onboarding`.
-4. **`/onboarding` (Editorial Calibration Desk)** [VERIFIED]:
-   - Dedicated 3-step broadsheet setup:
-     - Step 1: Core editorial sections (selection of 8 desks).
-     - Step 2: Custom keyword intellectual lenses with 1-click popular pills (AI, Space, Clean Energy, etc.).
-     - Step 3: Reading pace (Quick 5m, Standard 15m, Deep 30m) & masthead title confirmation.
-   - Calibrates preferences, logs calibration signal, and redirects to `/`.
-5. **`/archive` (Historical Broadsheet Registry)** [VERIFIED]:
-   - Auto-saves today's generated edition by date (`YYYY-MM-DD`).
-   - Pre-seeds 2 rich historical past editions with issue numbers, dates, lead headlines, and 3 takeaways previews.
-   - Interactive **Reader Modal** displaying complete executive summaries, takeaways, and preserved wire reports with direct source links.
-   - Browser print action and issue deletion controls.
-6. **`/profile` (Learning Brain / Recommendation Profile)** [VERIFIED]:
-   - Visual recommendation dashboard displaying how Daymark learns over time.
-   - **Dynamic Topic Weights**: 8 progress bars with visual percentage gauges (0–100%) dynamically calculated from user affinities.
-   - Engagement counters (Upvoted, Skipped, Saved Clippings).
-   - **Recent Learning Signals Log**: Chronological timeline of interactions with explicit impact descriptions.
-   - **Tomorrow's Broadsheet Forecast**: Editorial projection of how tomorrow's paper will adapt.
-7. **`/api/news` (Multi-Feed Parallel Ingestion)** [VERIFIED]:
-   - Live server-side RSS aggregator fetching from BBC News, NYT, Ars Technica, and NPR News.
+   - Pre-fills realistic demo values via "Quick Demo Fill".
+   - Automatically registers user in database and forwards to `/onboarding`.
 
-## 4. Commands Run and Verification Results
-- `npx tsc --noEmit`: Exited with code 0 (TypeScript compilation clean, zero type errors).
-- `npm run build`: Exited with code 0 (Next.js 14 production build compiled all 9 routes successfully).
-- `npm run start`: Running on `http://localhost:3000` (Task ID: `ea98fb1f-88dc-4e76-8705-c20d2abbd5f0/task-635`).
-- Multi-Route HTTP Audit:
-  - `GET /` -> 200 OK
-  - `GET /login` -> 200 OK
-  - `GET /signup` -> 200 OK
-  - `GET /onboarding` -> 200 OK
-  - `GET /archive` -> 200 OK
-  - `GET /profile` -> 200 OK
-  - `GET /api/news` -> 200 OK
-- Browser Subagent End-to-End Test Suite:
-  - Verified `/login` page with editorial styling and captured screenshot.
-  - Tested **"Instant Demo Login (Judge Access)"** button click -> logged in as Judge Vance and redirected to `/`.
-  - Verified Masthead greeting ("Signed in as Judge Vance"), Brain link, and Archive link.
-  - Verified **"Today's 3 Key Takeaways"** executive intelligence box.
-  - Navigated to `/profile` (Brain) -> verified Dynamic Topic Weights progress bars and Recent Learning Signals log.
-  - Navigated to `/archive` -> verified past editions grid, takeaways, and opened Reader Modal.
+4. `/verify-otp` (Press Verification Desk):
+   - 6-digit auto-advancing OTP digit inputs with paste handling.
+   - Hackathon Judge Quick-Fill button (pre-loads code `742891` for judge@nascon2026.org).
+   - Validates code against backend `/api/auth/otp/verify`, sets security cookies,
+     and redirects to broadsheet.
 
-## 5. Git Status & Commit History
-- Branch: `main`
-- Remote: `origin` (`https://github.com/aliabdullah-se/daymark.git`)
-- Milestones committed:
-  - `34c7541`: Basic Structural Feature implementation
-  - `626dab8`: docs: add architecture diagrams, comprehensive README, and environment setup instructions
-  - `a4e0ace`: deploy: add zero-budget Vercel configuration and handover progress record
-  - `0ba3d46`: feat: add native Web Speech audio briefing dispatch and update progress record
-  - `189eb43`: feat(ui): upgrade to Daymark editorial publication design with Tide and Reflecta styling
-  - `7de9df5`: chore: add root package.json scripts to enable seamless execution from workspace root
-  - `398eb88`: chore: update project and package names to daymark
-  - `4e48a15`: feat(pages): add login, signup, archive, and learning profile pages
-  - `e520d3f`: docs(architecture): add ASCII and Mermaid system architecture diagram aligned with Eynvision criteria
-  - `[Current]`: feat(ai): integrate free Google Gemini AI keys, auto-login fallback, and UI configuration modal
+5. `/onboarding` (Editorial Calibration Desk):
+   - 3-Step Broadsheet Setup:
+     * Step 1: Core editorial sections (selection of 8 desks: Tech, Business, World, Science, Culture, Politics, Environment, Opinion).
+     * Step 2: Custom keyword intellectual lenses with 1-click popular pills (AI, Space, Clean Energy, Biotech, etc.).
+     * Step 3: Reading pace calibration (Quick 5m, Standard 15m, Deep 30m) & masthead confirmation.
 
-## 6. Gemini AI Integration (PKR 0 Cost)
-- **Model**: `gemini-1.5-flash` via Google Generative Language REST API (zero external SDKs).
-- **Key Source**: Free tier API key from Google AI Studio (`https://aistudio.google.com/app/apikey`).
-- **Capabilities**: AI executive synthesis for "Today's 3 Key Takeaways", editorial lens analysis in "Why this?" modal, and morning reflection quotes.
-- **Fail-Safe**: If no key is set or quota is exceeded, gracefully falls back to deterministic broadsheet algorithmic scoring.
+6. `/archive` (Historical Broadsheet Registry):
+   - Preserves historical daily editions by date (`YYYY-MM-DD`).
+   - Pre-seeded past editions with lead headlines, issue numbers, and takeaway previews.
+   - Full Interactive Reader Modal: View complete historical issue layouts with links.
+   - Delete edition and print issue capabilities.
 
-## 7. Deployment Guide (PKR 0 Cost)
-### Deploying to Vercel (Recommended):
-1. Push your latest code to GitHub:
-   ```bash
-   git push origin main
+7. `/profile` (The Learning Brain & Recommendation Profile):
+   - Real-time recommendation system telemetry.
+   - Dynamic Topic Affinity Gauges: 8 progress bars (0-100%) showing live preference weighting.
+   - Engagement counters (Total upvotes, downvotes, skips, clippings).
+   - AI Suggested Interests Desk: Curated dynamic domain topics (Accept to add to keywords, Dismiss to remove).
+   - Chronological Learning Signals Log: Complete audit trail of interaction impacts.
+   - Tomorrow's Broadsheet Forecast: Narrative projection of how the paper will adapt.
+
+8. Backend API Routes:
+   - `GET /api/news`: Parallel RSS ingestion, category tagging, XML parsing, and caching.
+   - `POST /api/ai/gemini`: Google Gemini 1.5 Flash endpoint for summaries, takeaways, and explanations.
+   - `GET / POST / PATCH / DELETE /api/ai/learn`: Continuous learning telemetry, domain knowledge graph, and suggested interests.
+   - `POST /api/auth/otp/send`: Generates and logs 6-digit press OTP codes.
+   - `POST /api/auth/otp/verify`: Validates OTP credentials and issues user session tokens.
+   - `GET /api/auth/me`: Authenticates active user token from cookies or authorization headers.
+
+9. `middleware.ts`:
+   - Edge guard protecting `/`, `/profile`, `/archive`, `/onboarding`.
+   - Validates `daymark_token` or `daymark_otp_verified` cookies.
+   - Automatically supports `?demo=judge` URL parameter for instant 1-click judge evaluation.
+
+================================================================================
+4. CORE ENGINE IMPLEMENTATIONS & ALGORITHMIC LOGIC
+================================================================================
+1. Transparent Ranking Engine (`lib/ranking.ts`):
+   Every article is evaluated against a transparent composite score (0-100+ pts):
+   - Topic Score (Base 0-30 pts): Matches reader's selected desks (+20 pts).
+   - Topic Affinity Boost/Penalty (-12.5 to +12.5 pts): Calculated as `affinity * 2.5`
+     based on reader's upvotes and downvotes.
+   - Custom Keyword Match (0-35 pts): Substring search in title (+15 pts) and
+     description (+8 pts) for each calibrated custom interest keyword.
+   - Recency Score (0-20 pts): Linear decay over 48 hours (`(1 - ageHours / 48) * 20`).
+   - Reading Pace Alignment (0-15 pts): Evaluates article word count against
+     reader's pace (Quick: <500 words, Standard: 500-1200 words, Deep: >1200 words).
+   - Negative Feedback Penalties:
+     * Downvoted topics receive progressive suppression.
+     * Skipped articles are completely excluded from the edition.
+
+2. Anti-Echo-Chamber Blindspot Engine ("Outside Your Bubble"):
+   - Identifies high-quality stories from categories outside the reader's selected topics.
+   - Selects the highest-scoring unselected article and positions it with a distinct
+     intellectual challenge badge.
+
+3. Audio Dispatch Engine (`lib/audio.ts`):
+   - Formats a continuous morning script: Masthead intro -> 3 Key Takeaways ->
+     Cover Story -> Wire Headlines.
+   - Uses client-side `window.speechSynthesis` with speech rate and pitch calibration.
+   - Zero network latency, zero token costs.
+
+================================================================================
+5. AUTHENTICATION, SECURITY & JUDGE DEMO ACCESS
+================================================================================
+- Demo Judge Account:
+  * Name: Judge Vance
+  * Email: judge@nascon2026.org
+  * Paper Title: THE BROADSIDE DISPATCH
+  * Pre-authorized OTP: `742891`
+- Instant Judge Evaluation Bypass:
+  * Visiting `/?demo=judge` immediately sets tokens and bypasses all login/OTP gates.
+  * 1-Click "Instant Demo Login" on `/login` and `/verify-otp`.
+- Cookie Structure:
+  * `daymark_token`: Base64-encoded session payload.
+  * `daymark_otp_verified`: Boolean flag confirming OTP verification.
+
+================================================================================
+6. DATA PERSISTENCE & SCHEMAS (CLIENT + SERVER)
+================================================================================
+1. Server Database Schema (`lib/db.ts` -> `data/daymark_db.json`):
+   ```typescript
+   interface DaymarkDatabaseSchema {
+     users: UserAccount[];
+     interactions: DbInteraction[];
+     preferences: Record<string, UserPreferences>;
+     savedEditions: Record<string, SavedEdition[]>;
+     suggestedInterests: Record<string, SuggestedInterest[]>;
+     otps: Record<string, { code: string; expiresAt: string; verified: boolean }>;
+   }
    ```
-2. Go to [https://vercel.com/new](https://vercel.com/new) and log in with your GitHub account (No credit card required).
-3. Import the `Ai-Hackathon-Project` (or `daymark`) repository.
-4. If prompted for **Root Directory**, select `Ai-Hackathon-project` (or let `vercel.json` handle it).
-5. (Optional) Add `GEMINI_API_KEY` under Environment Variables in Vercel settings.
-6. Click **Deploy**. Vercel will build and assign a free production URL (e.g. `https://daymark-news.vercel.app`).
+2. Client Storage Keys (`lib/storage.ts` -> `localStorage`):
+   - `daymark_preferences`: Current user editorial configuration.
+   - `daymark_feedback`: Upvotes, downvotes, skips, and topic affinities.
+   - `daymark_saved_editions`: Array of historical edition snapshots.
+   - `daymark_learning_signals`: Array of interaction audit logs.
+   - `daymark_gemini_api_key`: Optional user-supplied Google AI Studio key.
+   - `daymark_current_user`: Active user profile object.
 
-## 8. Next Highest-Priority Task
-- Submit the live deployment URL, GitHub repository link, and Loom video before the deadline.
+================================================================================
+7. VERIFICATION & PRODUCTION BUILD AUDIT
+================================================================================
+- TypeScript Verification: `npx tsc --noEmit` -> Passed (0 errors).
+- Next.js Production Build: `npm run build` -> Passed (All 15 routes compiled).
+- Route Status Table:
+  * `/`                       Static (prerendered)     121 kB First Load JS
+  * `/archive`                Static (prerendered)     104 kB First Load JS
+  * `/login`                  Static (prerendered)     104 kB First Load JS
+  * `/onboarding`             Static (prerendered)     104 kB First Load JS
+  * `/profile`                Static (prerendered)     105 kB First Load JS
+  * `/signup`                 Static (prerendered)     103 kB First Load JS
+  * `/verify-otp`             Static (prerendered)     104 kB First Load JS
+  * `/api/news`               Dynamic (server-rendered)
+  * `/api/ai/gemini`          Dynamic (server-rendered)
+  * `/api/ai/learn`           Dynamic (server-rendered)
+  * `/api/auth/me`            Dynamic (server-rendered)
+  * `/api/auth/otp/send`      Dynamic (server-rendered)
+  * `/api/auth/otp/verify`    Dynamic (server-rendered)
+  * `middleware`              Edge Middleware (26.7 kB)
 
-## 9. Active Execution State
-- Production Server actively running on `http://localhost:3000`.
-- All 10 routes compiled and verified: `/`, `/login`, `/signup`, `/onboarding`, `/archive`, `/profile`, `/api/ai/gemini`, `/api/news`.
+================================================================================
+8. HIGH-VALUE FEATURE EXPANSION OPPORTUNITIES (FOR PROMPT ENGINEERS)
+================================================================================
+Your prompt engineer can design targeted prompts based on these ready-to-build
+feature avenues:
+
+A. Multi-Perspective / Neutrality Spectrum ("Perspective Matrix"):
+   - Concept: When major geopolitical, economic, or tech stories break, surface
+     how different global publications frame the same event side-by-side.
+   - Technical Enablers: Cluster incoming RSS items by title/topic similarity,
+     compare BBC vs NYT vs NPR coverage, and highlight divergence in sentiment.
+
+B. "Ask the Editor" In-Context AI Assistant:
+   - Concept: A floating or expandable slide-out panel on any article card where
+     readers can ask contextual questions ("Explain the historical context",
+     "What does this mean for semiconductor stocks?", "Summarize in 3 bullets").
+   - Technical Enablers: Connect to `/api/ai/gemini` with pre-crafted editorial
+     system prompts passing the article title and description.
+
+C. Sunday Edition / Deep-Dive Weekend Long-Read Mode:
+   - Concept: An alternate weekend theme that curates deep, analytical, long-form
+     features and essays with immersive typography, pulling from specialized
+     analysis RSS feeds.
+   - Technical Enablers: Weekend date detector in `app/page.tsx`, pace threshold
+     switched to "Deep (>1200 words)", and custom weekend broadsheet layout.
+
+D. Continuous Audio Dispatch Playlist ("The Daymark Morning Show"):
+   - Concept: Upgrade the current single-article audio briefing into a continuous
+     radio-style morning bulletin that seamlessly plays the Masthead Intro ->
+     Takeaways -> Lead Story -> Wire Digest with smooth transitions.
+   - Technical Enablers: Chain `SpeechSynthesisUtterance` callbacks (`onend`),
+     add media player controls (Play/Pause/Skip/Speed 1x/1.25x/1.5x) in a sticky
+     bottom audio player bar.
+
+E. Broadsheet Newsletter & Social Clipping Dispatch:
+   - Concept: Allow readers to export today's edition as a clean HTML email
+     newsletter or generate an authentic retro newsprint image clipping of any
+     article for sharing on Twitter/LinkedIn.
+   - Technical Enablers: HTML table email generator template or client-side
+     HTML-to-canvas rendering for vintage newsprint clippings.
+
+F. Offline Progressive Web App (PWA) with Morning Sync:
+   - Concept: Automatically cache today's paper at 6:00 AM so commuters can read
+     the complete broadsheet offline on the subway or flight.
+   - Technical Enablers: `next-pwa` service worker caching RSS responses and
+     assets for offline inspection.
+
+================================================================================
+9. PROMPT ENGINEERING DIRECTIVES & IMPLEMENTATION CONTRACTS
+================================================================================
+When creating prompts for this codebase, instruct the prompt engineer to adhere to:
+
+1. Zero-Cost Budget Invariant: Any proposed feature MUST run for $0.00. Use native
+   browser APIs, free public RSS feeds, local JSON storage, and free-tier Gemini.
+2. Full Implementation Standard: Never generate placeholder comments (`// TODO`),
+   incomplete mockups, or truncated code. Provide complete, runnable TypeScript files.
+3. Editorial Aesthetic Fidelity: Preserve the broadsheet design system (ivory paper
+   texture `#F7F5EF`, ink black `#20211F`, forest green `#496653`, serif headings,
+   drop caps, and broadsheet grid structure).
+4. Dual Layer Persistence: Ensure state updates synchronize with both client-side
+   `localStorage` and server-side `data/daymark_db.json` when appropriate.
+5. Instant Demo Compatibility: Always preserve the 1-click Judge bypass mechanisms
+   (`?demo=judge` and `DEMO_JUDGE_USER`) so evaluating judges are never locked out.
+
+================================================================================
+10. MILESTONE LOG: COMPLETE UI REDESIGN & CUSTOMIZABLE SETTINGS (OCT 2026)
+================================================================================
+Status: COMPLETED & VERIFIED
+Zero-Budget Status: PKR 0 / $0.00 USD strictly maintained
+
+A. Visual Redesign ("Midnight Editorial" + "Ivory Broadsheet"):
+   - Introduced comprehensive dual-theme system using semantic CSS variables:
+     * Dark Mode ("Midnight Editorial"): Background #171A19, Primary Surface #202522,
+       Elevated Surface #272D29, Primary Text #F1EEE5, Secondary Text #C1C5BD,
+       Subtle Border #2E3631, and Sage Green Accent #8EAE91.
+     * Light Mode ("Ivory Broadsheet"): Background #F7F5EF, Surface #FFFFFF,
+       Primary Text #20211F, Secondary Text #575955, Border #E2DEC9, Accent #496653.
+   - 1-Click Quick Theme Toggle in Masthead (Sun / Moon / Laptop icons) with zero
+     hydration mismatch or flashing.
+   - Print Theme Independence: @media print strictly forces clean pure white/black
+     broadsheet styling (#FFFFFF background, #000000 text) regardless of active
+     screen dark mode, protecting printer ink and ensuring crystal-clear PDF output.
+
+B. Customizable Settings Interface (`components/SettingsModal.tsx`):
+   - Dedicated Settings button in Masthead with gear icon and accessible modal.
+   - Tab 1: Appearance & Theme
+     * Mode: Light, Dark, System (reacts to OS prefers-color-scheme).
+     * Accent Palettes: Sage (#8EAE91/#496653), Blue (#60A5FA/#2563EB),
+       Amber (#F59E0B/#D97706), Violet (#A78BFA/#7C3AED).
+     * Interface Density: Compact (0.75rem / 0.25rem spacing), Comfortable
+       (1.25rem / 0.5rem spacing), Spacious (2rem / 0.75rem spacing).
+     * Reduced Motion toggle & OS media query compliance.
+   - Tab 2: Reading & Typography
+     * Headline Font: Editorial Serif (Playfair/Newsreader), Modern Sans (Inter),
+       Classic Broadsheet (Times New Roman serif).
+     * Body Text Size: Fine-tuned numeric slider (14px to 22px).
+     * Canvas Width: Narrow (max-w-4xl), Standard (max-w-6xl), Wide (max-w-7xl).
+     * Column Layout: Single column, Two columns, Three columns (responsive auto-collapse
+       to single column on mobile screens to prevent horizontal overflow).
+     * Story Thumbnails: Show or hide article thumbnail imagery.
+   - Tab 3: Editorial Focus Calibration
+     * Subscriber reader name & custom newspaper title personalization.
+     * Reading pace (Quick 5m, Standard 15m, Deep 30m).
+     * 8 Focus Desks (Tech, Business, World, Science, Culture, Politics, Environment, Opinion).
+     * Custom intellectual keyword lenses (with 1-click popular suggestions).
+   - Safe Reset: "Restore Defaults" with confirmation modal, preserving historical
+     saved editions, user accounts, and engagement learning signals.
+
+C. Centralized Theme Architecture:
+   - `types/settings.ts`: Strongly typed `AppearanceSettings` schema with sensible defaults.
+   - `lib/storage.ts`: Isolated `daymark_appearance_settings` key to prevent collision
+     with editorial preferences or saved edition archives.
+   - `components/ThemeProvider.tsx`: Centralized React Context providing live state,
+     HTML root class updates (`.dark`), data attributes (`data-accent`, `data-density`,
+     `data-reduced-motion`), and cross-tab storage synchronization.
+   - `tailwind.config.ts`: Added semantic color families and dynamic font tokens.
+   - `app/globals.css`: Implemented root CSS variables, print rules, and density tokens.
+
+D. Component Redesign & Theming Audit:
+   - `components/Masthead.tsx`: Dynamic theme variables, quick toggle, settings button.
+   - `components/ArticleCard.tsx`: Hero, Standard, and Wire cards updated with
+     semantic colors, dynamic font classes, active feedback indicators, and thumbnail toggle.
+   - `components/SectionBlock.tsx`: Dynamic column grid layouts and responsive collapse.
+   - `components/WhyThisModal.tsx`: Midnight/Ivory adaptive explanation modal.
+   - `components/SavedEditionsDrawer.tsx`: Adaptive broadsheet archive drawer.
+   - `components/PrintPreviewBanner.tsx`: Adaptive preview bar with print button.
+   - `components/StatusStates.tsx`: Adaptive skeletons and error wire states.
+   - `app/page.tsx`: Adaptive reading canvas widths, column grids, and settings integration.
+   - `app/archive/page.tsx`: Themed archive list and historical issue modal.
+   - `app/profile/page.tsx`: Themed learning signals log and topic affinity gauges.
+   - `app/login/page.tsx`, `app/signup/page.tsx`, `app/verify-otp/page.tsx`: Themed auth.
+
+E. Verification & Quality Assurance:
+   - `npx tsc --noEmit`: 0 errors (clean compilation).
+   - `npm run build`: Exit code 0, 15/15 static & dynamic routes prerendered cleanly.
+   - Browser Verification: Tested broadsheet curation (140 articles), theme
+     toggling, accent switches, typography adjustments, reading width, density modes,
+     feedback interactions, audio briefing, and print modal.
+
+================================================================================
+11. MILESTONE LOG: PAGE SELECTION DASHBOARD, ABOUT, PRIVACY & BRAND CLEANUP
+================================================================================
+Status: COMPLETED & VERIFIED
+
+A. Fully Functional Page Selection Dashboard (`app/dashboard/page.tsx`):
+   - Created dedicated, comprehensive directory indexing all 9 actual destinations:
+     * Today's Broadsheet (`/`)
+     * Historical Edition Archive (`/archive`)
+     * Recommendation Brain & Profile (`/profile`)
+     * Editorial Calibration Desk (`/onboarding`)
+     * Subscriber Press Room (`/login`)
+     * New Subscription Desk (`/signup`)
+     * Press Identity OTP Verification (`/verify-otp`)
+     * About Daymark (`/about`)
+     * Verified Privacy Policy (`/privacy`)
+   - Interactive category filtering pills: All Destinations (9), Editorial & Broadsheet (3),
+     Accounts & Calibration (4), and Product & Governance (2).
+   - In-dashboard settings modal trigger with live appearance and typography controls.
+   - Live session telemetry badge (reader name, custom masthead title, active theme & density).
+   - Seamless navigation back to today's broadsheet.
+
+B. Dedicated About Us Page (`app/about/page.tsx`):
+   - Comprehensive editorial manifesto detailing why Daymark was created.
+   - Contrasts the exhausting dopamine loops of infinite algorithmic feeds against
+     the calm, intentional finish of a finite morning broadsheet.
+   - Highlights the 4 core pillars: Finite Daily Editions, Explainable Curation,
+     Bubble Detection, and Sovereign Privacy.
+   - Details verified features: Executive 3-point intelligence box, local in-browser
+     audio briefing, ink-saving print/PDF broadsheet, and customizable typography.
+   - Explicit attribution of public RSS feeds (BBC News, NYT, Ars Technica, NPR).
+   - Zero mentions of hackathons, competitions, fake teams, or unsupported claims.
+
+C. Verified Privacy Policy Page (`app/privacy/page.tsx`):
+   - Grounded 100% in verified technical architecture:
+     * LocalStorage audit: daymark_preferences, daymark_feedback, daymark_saved_editions,
+       daymark_appearance_settings, daymark_learning_signals, daymark_gemini_api_key.
+     * Zero third-party trackers, zero advertising pixels, zero data brokerage.
+     * Functional session cookies for Next.js edge route protection (daymark_token, daymark_otp_verified).
+     * Server-side RSS caching with zero reader identity leakage to news publishers.
+     * Web Speech API privacy: 100% on-device speech synthesis with zero audio telemetry uploads.
+     * Optional Gemini API key security: local storage only, zero backend logging.
+     * Data sovereignty & complete erasure rights via settings reset or browser storage purge.
+
+D. Complete Event & Hackathon Branding Cleanup:
+   - Login Screen (`app/login/page.tsx`): Completely removed the promotional top popup/banner
+     mentioning "NaSCon '26 AI Hackathon" and hackathon judge demo buttons. Replaced with
+     an elegant subscriber sign-in form, Quick Demo Reader helper, and full navigation footer.
+   - Verify OTP (`app/verify-otp/page.tsx`): Removed "Hackathon Judge Quick-Fill" and
+     judge@nascon2026.org references.
+   - Broadsheet Footer (`app/page.tsx`): Removed "NaSCon '26 Official Entry" badge.
+   - Codebase Audit: Cleaned fallback user IDs ('judge-nascon-2026' -> 'demo-reader') across
+     `app/page.tsx`, `app/profile/page.tsx`, `app/api/auth/otp/send/route.ts`, and `data/daymark_db.json`.
+   - Types & Models (`types/news.ts`): Cleaned DEMO_JUDGE_USER to DEMO_USER (Arthur Vance / THE MORNING DISPATCH).
+   - Layout Metadata (`app/layout.tsx`): Removed 'NaSCon 26' keyword.
+   - Footers across all pages (`/`, `/archive`, `/profile`, `/login`, `/signup`, `/onboarding`, `/verify-otp`):
+     Standardized with clean links to Directory, Today's Broadsheet, Archive, About Us, and Privacy Policy.
+
+E. Verification & Test Results:
+   - `npx tsc --noEmit`: 0 errors (clean compile).
+   - `npm run build`: Exit code 0, 18/18 static & dynamic routes prerendered cleanly.
+   - Browser Subagent Verification: Confirmed clean login (banner gone), functional dashboard directory,
+     responsive filtering, About Us, Privacy Policy, and reader broadsheet.
+
+================================================================================
+12. MILESTONE LOG: MIDNIGHT EDITORIAL DESIGN SYSTEM IMPLEMENTATION
+================================================================================
+Status: COMPLETED & FULLY VERIFIED
+
+A. Visual Identity & Exact Color Palette:
+   - Main page background: #07111F
+   - Persistent sidebar background: #081321
+   - Primary surface cards: #0D1B2C
+   - Secondary / elevated surface: #12243A
+   - Crisp borders: #20344B
+   - Primary text: #F1F5FA
+   - Secondary text: #A4B3C7
+   - Accent blue: #526BFF (Midnight Cobalt)
+   - Accent cyan: #4DB8E8
+   - Success / green tones: #22C55E
+   - Error / red tones: #EF4444
+   - Applied across `app/globals.css`, `tailwind.config.ts`, and `types/settings.ts` (default accent set to blue).
+   - Fully independent `@media print` rules preserved for ink-saving pure white/black newspaper printing.
+
+B. Persistent Left Sidebar Navigation (`components/AppSidebar.tsx`):
+   - Desktop persistent left sidebar (fixed width `w-64`, `#081321`, `border-r #20344B`).
+   - Broadsheet content offset cleanly on desktop via `lg:pl-64`.
+   - Top masthead logo header with active edition badge.
+   - In-sidebar live search input filtering articles instantaneously.
+   - Main broadsheet navigation item with active blue indicator dot and pill highlight.
+   - 8 individual editorial desk filter links (Tech, World, Markets, Science, Arts, Health, Climate, Opinion).
+   - Governance links (About Daymark, Verified Privacy Policy).
+   - Bottom subscriber card with active subscriber name, custom paper title, quick theme toggle, and settings.
+   - Fully responsive slide-over drawer navigation for mobile viewports.
+
+C. In-App Distraction-Free Article Reader Modal (`components/ArticleReaderModal.tsx`):
+   - Modal reading environment with large editorial headline and hero photograph.
+   - Source badge, publication date, time, reading time, and explainable relevance match chip.
+   - Comfortable body typography with narrative drop cap and line length tuned for reading.
+   - Native Web Speech audio read-aloud button for the individual article with play/stop controls.
+   - Interactive feedback controls: Save to clippings, Like (upvote), Dislike (downvote), Copy share link.
+   - Daymark Editorial Context analysis card explaining the local matching score.
+   - Real related articles from the same category with instant switch-and-read capability.
+
+D. Sticky Audio Briefing Player (`components/StickyAudioPlayer.tsx`):
+   - Docked floating bottom player bar in `#0D1B2C` / `#20344B` with animated soundwave frequency bars.
+   - Live story title and source attribution display.
+   - Play / pause, stop, and dismiss controls powered by native browser SpeechSynthesis.
+
+E. 404 Unfiled Page (`app/not-found.tsx`):
+   - Midnight Editorial unfiled edition error layout with direct links back to Today's Paper (`/`) and Page Directory (`/dashboard`).
+
+F. Page-by-Page Integration & Layout:
+   - Broadsheet (`app/page.tsx`): Wrapped with persistent sidebar, interactive reader modal, and sticky audio player.
+   - Page Directory (`app/dashboard/page.tsx`): Persistent sidebar layout with responsive card grid.
+   - Historical Archive (`app/archive/page.tsx`): Persistent sidebar layout with saved editions reader and reprint controls.
+   - Reader Brain (`app/profile/page.tsx`): Persistent sidebar layout with telemetry gauges and live signal logs.
+   - About Us (`app/about/page.tsx`): Persistent sidebar layout with manifesto typography.
+   - Privacy Policy (`app/privacy/page.tsx`): Persistent sidebar layout with data sovereignty guarantees.
+   - Login & Auth (`app/login/page.tsx`): Focused Midnight Editorial sign-in with clean fields.
+
+G. Build & Verification Results:
+   - `npx tsc --noEmit`: PASS (0 errors).
+   - `npm run build`: PASS (Exit code 0, 18/18 static and dynamic routes compiled).
+   - Browser Subagent Verification: Visual verification confirmed desktop sidebar, mobile drawer (400x800),
+     article reader modal, audio briefing player, directory cards, and theme consistency.
+
+H. Daymark Header & Navigation Redesign:
+   1. Complete Brand Alignment to DAYMARK:
+      - Replaced all legacy "Broadside Dispatch" and "Morning Chronicle" titles with DAYMARK.
+      - Official Tagline: "Your world, clearly delivered."
+      - Realigned document metadata in `app/layout.tsx`, database defaults, and masthead rendering.
+   2. 3-Tier Professional Header Structure (`components/Masthead.tsx`):
+      - Section A: Compact Utility Bar with DAYMARK brand label, real edition date, subscriber greeting,
+        audio briefing toggle, directory link, settings trigger, and 1-click theme switch.
+      - Section B: Grand Editorial Masthead centered with customizable typography.
+      - Section C: Editorial Section Navigation Row with Home, Discover, Technology, World, Markets,
+        Science, Health, Climate, Culture, Sync Wire, and Save Issue.
+
+I. Print / PDF: Per-Newspaper Edition Export Redesign:
+   1. Removed Global Print Button:
+      - Removed `#btn-print-newspaper` from the global utility bar and website header (`components/Masthead.tsx`).
+      - Added `no-print` class to the global `<header>`, preventing navigation, brand bars, and utility controls from appearing in printouts.
+   2. Added Contextual Edition-Specific Print / PDF Buttons:
+      - Top Masthead Bar: Added `#btn-print-edition` at the top right of each newspaper edition masthead bar inside `<main>` (`app/page.tsx`).
+      - Bottom Edition Bar: Added `#btn-print-edition-bottom` at the end of each edition with clear label indicating the active edition.
+      - Styled with refined Daymark editorial button styling, subtle border, and lucide `Printer` icon.
+   3. Dynamic Contextual Metadata & Content Scoping:
+      - Computed `currentEditionMeta` dynamically based on active lens/section:
+        * Front Page: "Cover & Daily Broadsheet Edition"
+        * Technology: "Technology & AI Edition"
+        * World: "World Affairs Edition"
+        * Markets: "Markets & Business Edition"
+        * Science: "Science & Discovery Edition"
+        * Health: "Health & Medicine Edition"
+        * Climate: "Climate & Environment Edition"
+        * Culture: "Culture & Arts Edition"
+        * Opinion: "Commentary & Opinion Edition"
+        * Bookmarks: "Saved Clippings Edition"
+        * Archive: "[Edition Title] ([Date])"
+      - Document Title Dynamically Swapped: Before `window.print()`, `document.title` is updated to `DAYMARK - [Edition Name] - [Date]` so the browser's "Save as PDF" dialog suggests the exact filename.
+      - Print-Only Masthead (`.print-only`): Rendered strictly in print/PDF with centered DAYMARK broadsheet masthead, edition name, date, subscriber greeting, lenses, and archival rules.
+   4. Pure-White Ink-Saving Print Engine & Strict Chrome Suppression:
+      - `@media print` in `app/globals.css`:
+        * Strictly hides `.no-print`, `header`, `nav`, `button`, `footer`, `aside`, and `[role="dialog"]`.
+        * Resets desktop layout offsets (`div.lg:pl-64` margin/padding reset).
+        * Pure black `#000000` text on pure white `#FFFFFF` paper, preserving crisp typography regardless of Dark/Midnight mode.
+        * Configured page breaks (`break-inside: avoid` on articles, `break-after: avoid` on headings).
+   5. Archive Edition Printing (`app/archive/page.tsx`):
+      - Individual archived editions now print cleanly with dedicated archival masthead banner, hiding archive grid and navigation controls.
+   6. Comprehensive Test Results (7/7 PASS):
+      - 1. Open newspaper edition & click Print / PDF: PASS
+      - 2. Print preview contains only that edition: PASS
+      - 3. Open different newspaper & confirm content is exported instead: PASS
+      - 4. Global header & navigation do not appear in printout: PASS
+      - 5. Check multi-page articles, images, page breaks and margins: PASS
+      - 6. Browser's Save as PDF option works: PASS
+      - 7. Confirm no global Print / PDF button remains in website header: PASS
+
+
+

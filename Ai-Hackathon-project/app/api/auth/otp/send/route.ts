@@ -36,17 +36,16 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `A 6-digit Press Verification OTP has been dispatched to ${email}.`,
+      message: `A 6-digit Press Verification OTP has been sent to ${email}.`,
       expiresAt,
-      // For hackathon evaluation and zero-cost judging, also include the code in response
-      // so judges can verify in 1 click without requiring external paid SMS/Sendgrid credits!
+      // For testing and evaluation, include the demo code in response
       demoOtpCode: code,
       email,
     });
   } catch (error: any) {
     console.error('Error generating OTP:', error);
     return NextResponse.json(
-      { success: false, message: 'Server error while dispatching OTP.' },
+      { success: false, message: 'Server error while sending OTP.' },
       { status: 500 }
     );
   }

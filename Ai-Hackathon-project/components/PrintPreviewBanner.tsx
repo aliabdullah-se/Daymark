@@ -7,49 +7,66 @@ interface PrintPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirmPrint: () => void;
-  newspaperTitle: string;
+  newspaperTitle?: string;
+  editionName?: string;
+  editionDate?: string;
+  articleCount?: number;
 }
 
 export default function PrintPreviewModal({
   isOpen,
   onClose,
   onConfirmPrint,
-  newspaperTitle,
+  newspaperTitle = 'DAYMARK',
+  editionName = 'Daily Broadsheet Edition',
+  editionDate,
+  articleCount = 0,
 }: PrintPreviewModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/60 backdrop-blur-xs animate-in fade-in duration-150 no-print">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 no-print">
       <div 
-        className="bg-ivory-100 border border-ivory-300 rounded-lg shadow-2xl max-w-md w-full p-6 text-center"
+        className="bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-lg shadow-2xl max-w-md w-full p-6 text-center transition-colors duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="print-dialog-title"
       >
-        <div className="w-12 h-12 bg-forest-50 border border-forest-200 rounded-full flex items-center justify-center mx-auto mb-3">
-          <Printer className="w-6 h-6 text-forest-700" />
+        <div className="w-12 h-12 bg-[var(--accent-subtle)] border border-[var(--accent-border)] rounded-full flex items-center justify-center mx-auto mb-3">
+          <Printer className="w-6 h-6 text-[var(--accent-primary)]" />
         </div>
 
-        <h3 id="print-dialog-title" className="text-xl font-headline font-bold text-charcoal-900 mb-1">
-          Export as Broadsheet PDF
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--accent-subtle)] border border-[var(--accent-border)] text-[10px] font-mono uppercase tracking-wider text-[var(--accent-text)] font-semibold mb-2">
+          <span>{editionName}</span>
+          {articleCount > 0 && <span>• {articleCount} stories</span>}
+        </div>
+
+        <h3 id="print-dialog-title" className="text-xl font-headline font-bold text-[var(--text-primary)] mb-1">
+          Export Edition as PDF
         </h3>
 
-        <p className="text-xs font-serif italic text-charcoal-600 mb-4 leading-relaxed">
-          Your personalized edition of <strong className="text-charcoal-900 font-sans not-italic font-bold">{newspaperTitle}</strong> is formatted for clean broadsheet print and digital archiving.
+        <p className="text-xs font-serif italic text-[var(--text-secondary)] mb-4 leading-relaxed">
+          Exporting <strong className="text-[var(--text-primary)] font-sans not-italic font-bold">{editionName}</strong> from <strong className="text-[var(--text-primary)] font-sans not-italic font-bold">{newspaperTitle}</strong>. Only the masthead, date, and stories belonging to this specific edition will be printed.
         </p>
 
         {/* Tip Box */}
-        <div className="p-3.5 bg-ivory-200/50 border border-ivory-300 rounded-md text-left text-xs font-sans space-y-2 mb-5">
+        <div className="p-3.5 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-md text-left text-xs font-sans space-y-2 mb-5">
           <div className="flex items-start space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-forest-600 shrink-0 mt-0.5" />
-            <p className="text-charcoal-800">
-              In the browser prompt, select Destination: <strong>&ldquo;Save as PDF&rdquo;</strong>.
+            <CheckCircle2 className="w-4 h-4 text-[var(--accent-primary)] shrink-0 mt-0.5" />
+            <p className="text-[var(--text-secondary)]">
+              In your browser&apos;s print prompt, select Destination: <strong className="text-[var(--text-primary)]">&ldquo;Save as PDF&rdquo;</strong>.
             </p>
           </div>
           <div className="flex items-start space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-forest-600 shrink-0 mt-0.5" />
-            <p className="text-charcoal-800">
-              In More Settings, enable <strong>&ldquo;Background graphics&rdquo;</strong> for authentic paper tone.
+            <CheckCircle2 className="w-4 h-4 text-[var(--accent-primary)] shrink-0 mt-0.5" />
+            <p className="text-[var(--text-secondary)]">
+              Sidebar, navigation bars, and website buttons are automatically stripped from the final export.
+            </p>
+          </div>
+          <div className="flex items-start space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-[var(--accent-primary)] shrink-0 mt-0.5" />
+            <p className="text-[var(--text-secondary)]">
+              Pure-white paper styling is preserved regardless of your active Dark or Midnight theme.
             </p>
           </div>
         </div>
@@ -58,7 +75,7 @@ export default function PrintPreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-ivory-300 rounded text-xs font-sans text-charcoal-600 hover:bg-ivory-200"
+            className="px-4 py-2 border border-[var(--border-subtle)] rounded text-xs font-sans text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)] cursor-pointer"
           >
             Cancel
           </button>
@@ -69,7 +86,7 @@ export default function PrintPreviewModal({
               onConfirmPrint();
               onClose();
             }}
-            className="px-5 py-2 bg-forest-600 hover:bg-forest-700 text-white rounded text-xs font-sans font-medium shadow-xs flex items-center space-x-1.5 transition-colors"
+            className="px-5 py-2 bg-[var(--accent-primary)] hover:opacity-90 text-white rounded text-xs font-sans font-bold shadow-xs flex items-center space-x-1.5 transition-opacity cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Open Print Dialog</span>

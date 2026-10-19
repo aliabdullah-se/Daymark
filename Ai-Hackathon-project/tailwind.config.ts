@@ -12,10 +12,32 @@ const config: Config = {
       fontFamily: {
         serif: ["'Newsreader'", "'Playfair Display'", "Georgia", "'Times New Roman'", "serif"],
         headline: ["'Playfair Display'", "'Newsreader'", "Georgia", "serif"],
+        'headline-serif': ["'Newsreader'", "Georgia", "'Times New Roman'", "serif"],
+        'headline-sans': ["Inter", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "sans-serif"],
+        'headline-classic': ["'Playfair Display'", "Georgia", "serif"],
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
         mono: ["'JetBrains Mono'", "Menlo", "Courier New", "monospace"],
       },
       colors: {
+        // Midnight Editorial Dark Theme Palette
+        midnight: {
+          bg: "#07111F",
+          sidebar: "#081321",
+          surface: "#0D1B2C",
+          elevated: "#12243A",
+          subtle: "#0A1624",
+          border: "#20344B",
+          'border-strong': "#2A435E",
+          text: "#F1F5FA",
+          'text-secondary': "#A4B3C7",
+          'text-muted': "#6C829D",
+          accent: "#526BFF",
+          'accent-hover': "#697EFF",
+          'accent-cyan': "#4DB8E8",
+          success: "#22C55E",
+          error: "#EF4444",
+        },
+        // Classic Broadsheet Ivory Palette
         ivory: {
           50: "#FAF9F5",
           100: "#F7F5EF", // Canvas background
@@ -24,6 +46,7 @@ const config: Config = {
           400: "#D7CFBE",
           500: "#C4BBA7",
         },
+        // Ink Charcoal Typography Palette
         charcoal: {
           950: "#141514",
           900: "#20211F", // Primary typography
@@ -35,6 +58,7 @@ const config: Config = {
           300: "#C2C5BE",
           200: "#E0E3DD",
         },
+        // Editorial Forest Green Accent Palette
         forest: {
           50: "#F2F6F3",
           100: "#E4EDE6",

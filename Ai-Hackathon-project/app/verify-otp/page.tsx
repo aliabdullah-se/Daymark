@@ -81,12 +81,12 @@ export default function VerifyOtpPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(data.message || 'Fresh OTP code dispatched!');
+        setSuccessMsg(data.message || 'Fresh OTP code issued!');
         if (data.demoOtpCode) {
           setDispatchedCode(data.demoOtpCode);
         }
       } else {
-        setError(data.message || 'Failed to dispatch OTP.');
+        setError(data.message || 'Failed to send OTP.');
       }
     } catch {
       setError('Network error while requesting code.');
@@ -95,7 +95,7 @@ export default function VerifyOtpPage() {
     }
   };
 
-  const handleQuickFillJudge = () => {
+  const handleQuickFillDemo = () => {
     setEmail(DEMO_JUDGE_USER.email);
     setOtpDigits(['7', '4', '2', '8', '9', '1']);
     setDispatchedCode('742891');
@@ -159,18 +159,18 @@ export default function VerifyOtpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5EF] text-[#20211F] flex flex-col justify-between selection:bg-[#496653] selection:text-white">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] flex flex-col justify-between selection:bg-[var(--accent-primary)]/20 selection:text-[var(--accent-primary)]">
       {/* Top Broadsheet Masthead Banner */}
-      <header className="border-b border-[#20211F]/20 py-5 bg-[#F7F5EF]">
+      <header className="border-b border-[var(--border-subtle)] py-5 bg-[var(--bg-surface)]/80 backdrop-blur-xs">
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between">
           <Link href="/" className="group flex items-center gap-3">
-            <Newspaper className="w-6 h-6 text-[#496653] group-hover:rotate-[-6deg] transition-transform" />
-            <span className="font-serif text-2xl tracking-widest font-black uppercase text-[#20211F]">
+            <Newspaper className="w-6 h-6 text-[var(--accent-primary)] group-hover:rotate-[-6deg] transition-transform" />
+            <span className="font-headline text-2xl tracking-widest font-black uppercase text-[var(--text-primary)]">
               Daymark
             </span>
           </Link>
           <div className="text-right">
-            <span className="text-xs uppercase tracking-widest font-mono text-[#20211F]/70">
+            <span className="text-xs uppercase tracking-widest font-mono text-[var(--text-secondary)]">
               Security Desk • OTP Verification
             </span>
           </div>
@@ -179,60 +179,60 @@ export default function VerifyOtpPage() {
 
       {/* Main Verification Card */}
       <main className="flex-1 max-w-lg w-full mx-auto px-4 py-12 flex flex-col justify-center">
-        <div className="bg-white border border-[#20211F]/20 shadow-[0_4px_24px_rgba(32,33,31,0.06)] p-8 sm:p-10 relative">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs p-8 sm:p-10 relative">
           {/* Broadsheet Corner Stamp */}
-          <div className="absolute top-0 right-0 border-l border-b border-[#20211F]/20 bg-[#F7F5EF] px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-[#496653] font-semibold flex items-center gap-1">
+          <div className="absolute top-0 right-0 border-l border-b border-[var(--border-subtle)] bg-[var(--bg-page)] px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--accent-primary)] font-semibold flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5" />
-            Verified Dispatch
+            Verified Edition
           </div>
 
           <div className="text-center mb-6">
-            <h1 className="font-serif text-3xl font-black tracking-tight text-[#20211F] uppercase mb-2">
+            <h1 className="font-headline text-3xl font-black tracking-tight text-[var(--text-primary)] uppercase mb-2">
               Subscriber Verification
             </h1>
-            <p className="text-sm text-[#20211F]/75 font-serif leading-relaxed">
-              Enter the 6-digit Press Verification OTP code dispatched to confirm your identity.
+            <p className="text-sm text-[var(--text-secondary)] font-serif leading-relaxed">
+              Enter the 6-digit Press Verification OTP code issued to confirm your identity.
             </p>
           </div>
 
-          {/* Quick-fill Demo Box for Hackathon Judges */}
-          <div className="mb-6 p-3.5 bg-[#496653]/10 border border-[#496653]/30 rounded-none text-left">
+          {/* Quick-fill Demo Helper Box */}
+          <div className="mb-6 p-3.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 rounded-none text-left">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#496653] uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">
                 <Sparkles className="w-4 h-4" />
-                Hackathon Judge Quick-Fill
+                Sample Verification Code
               </div>
               <button
                 type="button"
-                onClick={handleQuickFillJudge}
-                className="text-xs font-mono font-bold bg-[#496653] text-white px-2.5 py-1 hover:bg-[#3d5545] transition-colors"
+                onClick={handleQuickFillDemo}
+                className="text-xs font-mono font-bold bg-[var(--accent-primary)] text-white px-2.5 py-1 hover:opacity-90 transition-opacity cursor-pointer"
               >
                 1-Click Fill (742891)
               </button>
             </div>
-            <p className="text-xs text-[#20211F]/75 mt-1 font-serif">
-              Pre-authorized demo code: <strong className="font-mono text-[#496653]">742891</strong> for{' '}
-              <span className="font-mono">{email || 'judge@nascon2026.org'}</span>.
+            <p className="text-xs text-[var(--text-secondary)] mt-1 font-serif">
+              Pre-authorized demo code: <strong className="font-mono text-[var(--accent-primary)]">742891</strong> for{' '}
+              <span className="font-mono">{email || 'reader@daymark.internal'}</span>.
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 text-red-500 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
               <span>{error}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-6 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>{successMsg}</span>
             </div>
           )}
 
           <form onSubmit={handleVerify} className="space-y-6">
             <div>
-              <label className="block text-xs uppercase font-mono tracking-wider text-[#20211F]/70 mb-1">
+              <label className="block text-xs uppercase font-mono tracking-wider text-[var(--text-secondary)] mb-1">
                 Subscriber Email
               </label>
               <input
@@ -240,13 +240,13 @@ export default function VerifyOtpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="subscriber@example.org"
-                className="w-full px-3 py-2 text-sm bg-[#F7F5EF]/60 border border-[#20211F]/30 focus:border-[#496653] focus:outline-none font-mono"
+                className="w-full px-3 py-2 text-sm bg-[var(--bg-page)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-hidden font-mono"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase font-mono tracking-wider text-[#20211F]/70 mb-3 text-center">
+              <label className="block text-xs uppercase font-mono tracking-wider text-[var(--text-secondary)] mb-3 text-center">
                 6-Digit Press OTP Code
               </label>
               <div className="flex justify-between gap-2 sm:gap-3">
@@ -263,7 +263,7 @@ export default function VerifyOtpPage() {
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
                     onPaste={handlePaste}
-                    className="w-12 h-14 text-center font-mono text-2xl font-black bg-[#F7F5EF] border-2 border-[#20211F]/30 focus:border-[#496653] focus:bg-white focus:outline-none transition-all"
+                    className="w-12 h-14 text-center font-mono text-2xl font-black bg-[var(--bg-page)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-surface)] text-[var(--text-primary)] focus:outline-hidden transition-all"
                   />
                 ))}
               </div>
@@ -272,7 +272,7 @@ export default function VerifyOtpPage() {
             <button
               type="submit"
               disabled={isLoading || otpDigits.join('').length < 6}
-              className="w-full py-3.5 bg-[#20211F] text-white hover:bg-[#496653] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 uppercase tracking-widest text-xs font-bold"
+              className="w-full py-3.5 bg-[var(--text-primary)] text-[var(--bg-page)] hover:bg-[var(--accent-primary)] hover:text-white disabled:opacity-50 transition-colors flex items-center justify-center gap-2 uppercase tracking-widest text-xs font-bold cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -287,17 +287,17 @@ export default function VerifyOtpPage() {
               )}
             </button>
 
-            <div className="flex items-center justify-between pt-2 border-t border-[#20211F]/10 text-xs">
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)] text-xs">
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={isResending}
-                className="font-mono text-[#496653] hover:underline flex items-center gap-1"
+                className="font-mono text-[var(--accent-primary)] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <RotateCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
-                {isResending ? 'Dispatching...' : 'Resend Code'}
+                {isResending ? 'Sending...' : 'Resend Code'}
               </button>
-              <Link href="/login" className="font-serif text-[#20211F]/60 hover:text-[#20211F]">
+              <Link href="/login" className="font-serif text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                 Back to Sign In
               </Link>
             </div>
@@ -306,8 +306,31 @@ export default function VerifyOtpPage() {
       </main>
 
       {/* Broadsheet Footer */}
-      <footer className="border-t border-[#20211F]/20 py-4 text-center text-xs font-serif text-[#20211F]/60">
-        Daymark Editorial Dispatch System • Cryptographic Press Verification v1.0
+      <footer className="border-t border-[var(--border-subtle)] py-4 text-center text-xs font-serif text-[var(--text-muted)] bg-[var(--bg-surface)]">
+        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center items-center gap-4 text-xs">
+          <Link href="/dashboard" className="hover:text-[var(--text-primary)] transition-colors">
+            Page Directory
+          </Link>
+          <span>•</span>
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
+            Today&apos;s Broadsheet
+          </Link>
+          <span>•</span>
+          <Link href="/archive" className="hover:text-[var(--text-primary)] transition-colors">
+            Archive
+          </Link>
+          <span>•</span>
+          <Link href="/about" className="hover:text-[var(--text-primary)] transition-colors">
+            About Us
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-[var(--text-primary)] transition-colors">
+            Privacy Policy
+          </Link>
+        </div>
+        <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+          DAYMARK Editorial Desk • Cryptographic Press Verification v1.0
+        </p>
       </footer>
     </div>
   );

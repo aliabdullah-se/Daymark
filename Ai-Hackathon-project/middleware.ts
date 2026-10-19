@@ -15,15 +15,24 @@ export function middleware(request: NextRequest) {
 
   const token = request.cookies.get('daymark_token')?.value;
   const isOtpVerified = request.cookies.get('daymark_otp_verified')?.value === 'true';
-  const isDemo = request.nextUrl.searchParams.get('demo') === 'judge';
+  const isDemo =
+    request.nextUrl.searchParams.get('demo') === 'judge' ||
+    request.nextUrl.searchParams.get('demo') === 'true' ||
+    request.nextUrl.searchParams.get('demo') === 'reader';
 
   // Routes requiring verified subscriber identity or judge credentials
-  const isProtectedRoute = pathname.startsWith('/profile') || pathname.startsWith('/archive');
+  const isProtectedRoute =
+    pathname === '/' ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/archive');
 
   if (isProtectedRoute && !token && !isOtpVerified && !isDemo) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
-    loginUrl.searchParams.set('redirect', pathname);
+    if (pathname !== '/') {
+      loginUrl.searchParams.set('redirect', pathname);
+    }
     return NextResponse.redirect(loginUrl);
   }
 

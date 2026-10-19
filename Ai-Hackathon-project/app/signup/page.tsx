@@ -17,16 +17,24 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [paperTitle, setPaperTitle] = useState('THE MORNING CHRONICLE');
+  const [paperTitle, setPaperTitle] = useState('DAYMARK');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [redirectParam, setRedirectParam] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const redir = new URLSearchParams(window.location.search).get('redirect');
+      if (redir) setRedirectParam(redir);
+    }
+  }, []);
 
   const handleQuickFill = () => {
     setFullName('Sarah Lin');
     setEmail('sarah.lin@example.com');
     setPassword('subscriber123');
-    setPaperTitle('THE LIN DISPATCH');
+    setPaperTitle('DAYMARK');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -87,30 +95,30 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory-100 flex flex-col justify-between text-charcoal-900 font-sans selection:bg-forest-100 selection:text-forest-900">
+    <div className="min-h-screen bg-[var(--bg-page)] flex flex-col justify-between text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/20 selection:text-[var(--accent-primary)]">
       {/* Top Hairline */}
-      <div className="h-1.5 bg-forest-700 w-full" />
+      <div className="h-1.5 bg-[var(--accent-primary)] w-full" />
 
       {/* Header */}
-      <header className="border-b border-ivory-300 bg-ivory-50/70">
+      <header className="border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]/80 backdrop-blur-xs">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 group">
-            <Newspaper className="w-5 h-5 text-forest-700 transition-transform group-hover:scale-105" />
-            <span className="font-headline text-2xl font-bold tracking-tight text-charcoal-900">
+            <Newspaper className="w-5 h-5 text-[var(--accent-primary)] transition-transform group-hover:scale-105" />
+            <span className="font-headline text-2xl font-bold tracking-tight text-[var(--text-primary)]">
               DAYMARK
             </span>
           </Link>
           <div className="flex items-center space-x-3 text-xs font-sans">
             <Link
               href="/"
-              className="text-charcoal-600 hover:text-charcoal-900 font-medium"
+              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium"
             >
               ← Back to Paper
             </Link>
-            <span className="text-ivory-400">|</span>
+            <span className="text-[var(--border-subtle)]">|</span>
             <Link
-              href="/login"
-              className="font-semibold text-forest-700 hover:text-forest-900"
+              href={`/login${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
+              className="font-semibold text-[var(--accent-primary)] hover:opacity-80"
             >
               Already Subscribed? Sign In →
             </Link>
@@ -120,17 +128,17 @@ export default function SignupPage() {
 
       {/* Main Container */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-lg bg-white border border-ivory-300 rounded shadow-xs p-6 sm:p-8 relative">
+        <div className="w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded shadow-xs p-6 sm:p-8 relative">
           {/* Header */}
-          <div className="text-center mb-6 border-b border-ivory-200 pb-5">
-            <div className="inline-flex items-center space-x-1 text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-forest-700 mb-1.5">
+          <div className="text-center mb-6 border-b border-[var(--border-subtle)] pb-5">
+            <div className="inline-flex items-center space-x-1 text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[var(--accent-primary)] mb-1.5">
               <UserPlus className="w-3.5 h-3.5" />
               <span>Subscription Desk</span>
             </div>
-            <h1 className="font-headline text-3xl sm:text-4xl font-bold text-charcoal-900">
+            <h1 className="font-headline text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
               Subscribe to Your Morning Paper
             </h1>
-            <p className="font-serif italic text-xs sm:text-sm text-charcoal-600 mt-1 max-w-md mx-auto">
+            <p className="font-serif italic text-xs sm:text-sm text-[var(--text-secondary)] mt-1 max-w-md mx-auto">
               Curate real, verified news delivered daily in an elegant, quiet broadsheet.
             </p>
           </div>
@@ -140,7 +148,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={handleQuickFill}
-              className="text-xs text-forest-700 hover:text-forest-900 underline font-medium flex items-center space-x-1"
+              className="text-xs text-[var(--accent-primary)] hover:opacity-80 underline font-medium flex items-center space-x-1 cursor-pointer"
             >
               <Sparkles className="w-3 h-3" />
               <span>Auto-fill Sample Subscriber Data</span>
@@ -149,15 +157,15 @@ export default function SignupPage() {
 
           {/* Alerts */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-start space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-500 flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-xs text-green-800 flex items-start space-x-2">
-              <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-400 flex items-start space-x-2">
+              <Check className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -165,7 +173,7 @@ export default function SignupPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-sans font-semibold text-charcoal-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-sans font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Your Full Name
               </label>
               <input
@@ -175,12 +183,12 @@ export default function SignupPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Sarah Lin"
-                className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans"
+                className="w-full px-3 py-2 text-sm bg-[var(--bg-page)] border border-[var(--border-subtle)] rounded text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] font-sans"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-sans font-semibold text-charcoal-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-sans font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Subscriber Email Address
               </label>
               <input
@@ -190,12 +198,12 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="reader@example.com"
-                className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans"
+                className="w-full px-3 py-2 text-sm bg-[var(--bg-page)] border border-[var(--border-subtle)] rounded text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] font-sans"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-sans font-semibold text-charcoal-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-sans font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Password
               </label>
               <input
@@ -205,16 +213,16 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a password"
-                className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans"
+                className="w-full px-3 py-2 text-sm bg-[var(--bg-page)] border border-[var(--border-subtle)] rounded text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] font-sans"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-sans font-semibold text-charcoal-700 uppercase tracking-wider">
+                <label className="block text-xs font-sans font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                   Custom Newspaper Title
                 </label>
-                <span className="text-[11px] text-forest-700 font-serif italic">
+                <span className="text-[11px] text-[var(--accent-primary)] font-serif italic">
                   Shown in your masthead
                 </span>
               </div>
@@ -223,8 +231,8 @@ export default function SignupPage() {
                 type="text"
                 value={paperTitle}
                 onChange={(e) => setPaperTitle(e.target.value)}
-                placeholder="e.g. THE LIN DISPATCH"
-                className="w-full px-3 py-2 text-sm bg-ivory-50 border border-ivory-300 rounded text-charcoal-900 focus:outline-hidden focus:border-forest-600 focus:ring-1 focus:ring-forest-600 font-sans uppercase tracking-wider font-semibold"
+                placeholder="e.g. DAYMARK"
+                className="w-full px-3 py-2 text-sm bg-[var(--bg-page)] border border-[var(--border-subtle)] rounded text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] font-sans uppercase tracking-wider font-semibold"
               />
             </div>
 
@@ -232,17 +240,17 @@ export default function SignupPage() {
               id="btn-signup-submit"
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-forest-700 hover:bg-forest-800 text-white font-sans text-xs font-semibold rounded tracking-wide transition-all shadow-xs flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 mt-4"
+              className="w-full py-3 px-4 bg-[var(--accent-primary)] hover:opacity-90 text-white font-sans text-xs font-semibold rounded tracking-wide transition-all shadow-xs flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 mt-4"
             >
               <span>{isLoading ? 'Setting Up Your Press...' : 'Subscribe & Calibrate Focus Desks →'}</span>
             </button>
           </form>
 
           {/* Footer note */}
-          <div className="mt-6 pt-4 border-t border-ivory-200 text-center">
-            <p className="text-xs text-charcoal-500 font-serif">
+          <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center">
+            <p className="text-xs text-[var(--text-secondary)] font-serif">
               Already have an account?{' '}
-              <Link href="/login" className="text-forest-700 font-sans font-semibold hover:underline">
+              <Link href={`/login${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`} className="text-[var(--accent-primary)] font-sans font-semibold hover:underline">
                 Sign in to your press room
               </Link>
             </p>
@@ -251,8 +259,31 @@ export default function SignupPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-ivory-300 py-4 bg-ivory-50 text-center text-[11px] font-sans text-charcoal-500">
-        <p>Daymark — Verified News Wire • 100% Client-Side LocalStorage Auth • NaSCon &apos;26</p>
+      <footer className="border-t border-[var(--border-subtle)] py-4 bg-[var(--bg-surface)] text-center text-xs font-serif text-[var(--text-muted)]">
+        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center items-center gap-4 text-xs">
+          <Link href="/dashboard" className="hover:text-[var(--text-primary)] transition-colors">
+            Page Directory
+          </Link>
+          <span>•</span>
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
+            Today&apos;s Broadsheet
+          </Link>
+          <span>•</span>
+          <Link href="/archive" className="hover:text-[var(--text-primary)] transition-colors">
+            Archive
+          </Link>
+          <span>•</span>
+          <Link href="/about" className="hover:text-[var(--text-primary)] transition-colors">
+            About Us
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-[var(--text-primary)] transition-colors">
+            Privacy Policy
+          </Link>
+        </div>
+        <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+          Daymark — Verified News Wire • 100% Client-Side LocalStorage Auth
+        </p>
       </footer>
     </div>
   );

@@ -52,8 +52,12 @@ export default function OnboardingPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const loaded = getStoredPreferences();
     const user = getCurrentUser();
+    if (!user) {
+      window.location.href = '/login?redirect=/onboarding';
+      return;
+    }
+    const loaded = getStoredPreferences();
     setPreferences(loaded);
     setReaderName(user?.name || loaded.readerName || 'Reader');
     setNewspaperTitle(user?.paperTitle || loaded.newspaperTitle || 'DAYMARK');
@@ -101,7 +105,7 @@ export default function OnboardingPage() {
     addLearningSignal({
       type: 'calibrate',
       articleTitle: `Editorial Calibration: ${selectedTopics.length} Focus Topics, ${customInterests.length} Lenses`,
-      impactDescription: `Pace set to ${readingPace.toUpperCase()} (${readingPace === 'quick' ? '5m' : readingPace === 'standard' ? '15m' : '30m'}). Ready for daily dispatch.`,
+      impactDescription: `Pace set to ${readingPace.toUpperCase()} (${readingPace === 'quick' ? '5m' : readingPace === 'standard' ? '15m' : '30m'}). Ready for daily broadsheet.`,
     });
 
     router.push('/');
@@ -341,17 +345,17 @@ export default function OnboardingPage() {
                     id: 'quick' as const,
                     title: 'Quick Scan',
                     time: '~5 Minutes',
-                    desc: 'Tight executive summaries and breaking dispatches.',
+                    desc: 'Tight executive summaries and breaking reports.',
                   },
                   {
                     id: 'standard' as const,
-                    title: 'Standard Dispatch',
+                    title: 'Standard Edition',
                     time: '~15 Minutes',
                     desc: 'Balanced broadsheet with cover story and reports.',
                   },
                   {
                     id: 'deep' as const,
-                    title: 'Deep Broadside',
+                    title: 'Deep Immersion',
                     time: '~30 Minutes',
                     desc: 'In-depth essays, investigative reports, and analysis.',
                   },
@@ -437,8 +441,31 @@ export default function OnboardingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-ivory-300 py-4 bg-ivory-50 text-center text-[11px] font-sans text-charcoal-500">
-        <p>Daymark — Verified News Wire • 100% Free Zero-Budget Architecture • NaSCon &apos;26</p>
+      <footer className="border-t border-[var(--border-subtle)] py-4 bg-[var(--bg-surface)] text-center text-xs font-serif text-[var(--text-muted)]">
+        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center items-center gap-4 text-xs">
+          <Link href="/dashboard" className="hover:text-[var(--text-primary)] transition-colors">
+            Page Directory
+          </Link>
+          <span>•</span>
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
+            Today&apos;s Broadsheet
+          </Link>
+          <span>•</span>
+          <Link href="/archive" className="hover:text-[var(--text-primary)] transition-colors">
+            Archive
+          </Link>
+          <span>•</span>
+          <Link href="/about" className="hover:text-[var(--text-primary)] transition-colors">
+            About Us
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-[var(--text-primary)] transition-colors">
+            Privacy Policy
+          </Link>
+        </div>
+        <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+          DAYMARK — Your world, clearly delivered. • Verified News Wire
+        </p>
       </footer>
     </div>
   );

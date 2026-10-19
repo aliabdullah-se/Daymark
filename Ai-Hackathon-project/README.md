@@ -99,7 +99,7 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser.
 ## 📖 How to Demo Daymark
 
 1. **Onboarding / Preferences**:
-   - Enter your name and custom newspaper title (*e.g., "THE VANCE DISPATCH"*).
+   - Enter your name and custom newspaper title (*e.g., "DAYMARK"*).
    - Select topics and add custom interest lenses (*e.g., Artificial Intelligence, Clean Energy*).
    - Click **Generate My Morning Edition**.
 
@@ -107,7 +107,7 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser.
    - View the TIDE-inspired two-column Cover Story.
    - Click the **Match Badge** (*e.g., 94% Match*) to inspect the transparent scoring logic.
 
-3. **Audio Dispatch**:
+3. **Audio Briefing**:
    - Click **Audio Brief** in the top bar to listen to your morning audio briefing.
 
 4. **Archive & Print PDF**:
