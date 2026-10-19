@@ -92,6 +92,7 @@ export default function DaymarkBroadsheetPage() {
   const [isAiTakeawaysLoading, setIsAiTakeawaysLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [readingArticle, setReadingArticle] = useState<ScoredArticle | null>(null);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'appearance' | 'reading' | 'editorial' | 'ai'>('appearance');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -192,7 +193,9 @@ export default function DaymarkBroadsheetPage() {
   const handleSynthesizeWithGemini = async () => {
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
-      setIsGeminiModalOpen(true);
+      setSettingsInitialTab('ai');
+      openSettings();
+      showToast('Please configure your free Gemini API key in Settings');
       return;
     }
 
@@ -843,7 +846,10 @@ export default function DaymarkBroadsheetPage() {
           savedEditionsCount={savedEditions.length}
           isPlayingAudio={isPlayingAudio}
           onToggleAudio={handleToggleAudio}
-          onOpenGeminiKey={() => setIsGeminiModalOpen(true)}
+          onOpenGeminiKey={() => {
+            setSettingsInitialTab('ai');
+            openSettings();
+          }}
           hasGeminiKey={hasGeminiKey}
           onOpenSettings={openSettings}
           onToggleSidebar={() => setIsSidebarOpen(true)}
@@ -1465,11 +1471,18 @@ export default function DaymarkBroadsheetPage() {
       {/* Customizable Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={closeSettings}
+        onClose={() => {
+          closeSettings();
+          setSettingsInitialTab('appearance');
+        }}
         preferences={preferences}
         onSavePreferences={handleSavePreferences}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
         onShowToast={showToast}
+        initialTab={settingsInitialTab}
+        onKeySaved={() => {
+          setHasGeminiKey(!!getGeminiApiKey());
+        }}
       />
 
       {/* Onboarding & Preferences Modal */}

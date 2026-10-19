@@ -537,5 +537,26 @@ I. Print / PDF: Per-Newspaper Edition Export Redesign:
       - 6. Browser's Save as PDF option works: PASS
       - 7. Confirm no global Print / PDF button remains in website header: PASS
 
-
-
+J. Header AI Key Migration & Sidebar Light Theme Adaptations:
+   1. Cleaned Global Utility Bar (`components/Masthead.tsx`):
+      - Removed `#btn-gemini-key` ("Gemini AI Active" pill) from the top website header bar.
+      - Reduced top bar visual noise, dedicating the header utility area exclusively to brand identity, date, subscriber greeting, audio player, page directory, theme switch, and settings gear.
+   2. Dedicated AI Intelligence Tab in Settings Modal (`components/SettingsModal.tsx`):
+      - Added a full-featured "AI Intelligence" tab in the Settings modal with lucide `Sparkles` and `KeyRound` icons.
+      - Integrated Google Gemini 1.5 Flash configuration:
+        * Obfuscated / revealable API key input field.
+        * Live API test button verifying connection directly against Google Gemini `models/gemini-1.5-flash:generateContent`.
+        * Save and Clear buttons with reactive storage (`localStorage['gemini_api_key']`).
+        * Free Google AI Studio direct link and step-by-step tutorial.
+        * 100% Client-Side Privacy Guarantee (keys remain strictly in reader's browser).
+      - Updated `app/page.tsx` so clicking AI synthesis triggers (e.g. Reader Brain or Gemini summaries) without a configured key automatically opens the Settings modal directly to the `ai` tab.
+   3. Complete Light Theme Support in Sidebar (`components/AppSidebar.tsx`):
+      - Migrated sidebar background, borders, text, active indicator, and badges from hardcoded midnight navy hex codes to CSS design tokens (`var(--bg-surface)`, `var(--bg-surface-elevated)`, `var(--border-subtle)`, `var(--text-primary)`, `var(--text-secondary)`, `var(--accent-subtle)`, `var(--accent-primary)`).
+      - The sidebar now adapts seamlessly between:
+        * Daily Broadsheet (Light theme: crisp ivory/white editorial styling with dark ink typography).
+        * Midnight Editorial (Dark theme: deep midnight navy editorial styling).
+      - Fixed subscriber profile card to honor `prefs.readerName` / clean user names rather than obsolete demo identifiers.
+   4. Verification & Testing:
+      - `npx tsc --noEmit`: 0 errors.
+      - `npm run build`: Production build succeeded across all 18 static & dynamic routes.
+      - Visual confirmation via browser testing: Verified clean header without AI button, seamless sidebar light/dark mode contrast, and verified AI configuration workflow in Settings.

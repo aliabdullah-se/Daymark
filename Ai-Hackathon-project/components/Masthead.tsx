@@ -306,25 +306,6 @@ export default function Masthead({
 
           {/* Right Side: Consistent Utility Controls */}
           <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-            {/* Free Gemini AI Key Indicator (if supported) */}
-            {onOpenGeminiKey && (
-              <button
-                type="button"
-                onClick={onOpenGeminiKey}
-                className={`inline-flex items-center justify-center gap-1 h-7 px-2 sm:px-2.5 rounded-md border text-xs font-sans font-medium transition-all cursor-pointer shadow-xs ${
-                  hasGeminiKey
-                    ? 'bg-[var(--accent-subtle)] text-[var(--accent-text)] border-[var(--accent-border)] font-semibold'
-                    : 'bg-[var(--bg-surface-elevated)] hover:bg-[var(--bg-surface-subtle)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
-                }`}
-                title="Configure Free Google Gemini API Key"
-                id="btn-gemini-key"
-              >
-                <Sparkles className="w-3 h-3 text-[var(--accent-primary)] shrink-0" />
-                <span className="hidden sm:inline">Gemini AI</span>
-                <span className="text-[10px] font-mono">{hasGeminiKey ? 'Active' : 'Key'}</span>
-              </button>
-            )}
-
             {/* Quick Theme Toggle Button */}
             <button
               type="button"

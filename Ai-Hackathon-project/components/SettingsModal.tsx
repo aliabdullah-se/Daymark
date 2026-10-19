@@ -21,7 +21,11 @@ import {
   Tag,
   ShieldCheck,
   AlertCircle,
+  KeyRound,
+  ExternalLink,
+  EyeOff,
 } from 'lucide-react';
+import { getGeminiApiKey, saveGeminiApiKey } from '@/lib/gemini';
 import { useSettings } from './ThemeProvider';
 import {
   ThemeMode,
@@ -42,6 +46,8 @@ interface SettingsModalProps {
   onSavePreferences?: (newPrefs: UserPreferences) => void;
   onOpenOnboarding?: () => void;
   onShowToast?: (msg: string) => void;
+  initialTab?: 'appearance' | 'reading' | 'editorial' | 'ai';
+  onKeySaved?: () => void;
 }
 
 export default function SettingsModal({
@@ -51,6 +57,8 @@ export default function SettingsModal({
   onSavePreferences,
   onOpenOnboarding = () => {},
   onShowToast = () => {},
+  initialTab = 'appearance',
+  onKeySaved,
 }: SettingsModalProps) {
   const { settings, updateSettings, resetSettings, resolvedTheme } = useSettings();
   const preferences = propPreferences || getStoredPreferences();
@@ -67,8 +75,26 @@ export default function SettingsModal({
     if (onShowToast) onShowToast(msg);
   };
 
-  const [activeTab, setActiveTab] = useState<'appearance' | 'reading' | 'editorial'>('appearance');
+  const [activeTab, setActiveTab] = useState<'appearance' | 'reading' | 'editorial' | 'ai'>(initialTab);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [keySaved, setKeySaved] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testMessage, setTestMessage] = useState('');
+
+  // Load API key whenever modal opens or mounts
+  React.useEffect(() => {
+    if (isOpen) {
+      setApiKey(getGeminiApiKey());
+      setKeySaved(false);
+      setTestStatus('idle');
+      setTestMessage('');
+      if (initialTab) {
+        setActiveTab(initialTab);
+      }
+    }
+  }, [isOpen, initialTab]);
 
   // Local state for editorial preferences
   const [readerName, setReaderName] = useState(preferences.readerName || 'Reader');
@@ -127,6 +153,61 @@ export default function SettingsModal({
     const next = customInterests.filter((k) => k !== kw);
     setCustomInterests(next);
     handleSavePref({ ...preferences, customInterests: next });
+  };
+
+  const handleSaveApiKey = () => {
+    saveGeminiApiKey(apiKey);
+    setKeySaved(true);
+    handleToast(apiKey.trim() ? 'Google Gemini API key saved!' : 'Google Gemini API key removed');
+    if (onKeySaved) onKeySaved();
+    setTimeout(() => setKeySaved(false), 2500);
+  };
+
+  const handleClearApiKey = () => {
+    saveGeminiApiKey('');
+    setApiKey('');
+    setKeySaved(true);
+    setTestStatus('idle');
+    setTestMessage('');
+    handleToast('Google Gemini API key removed');
+    if (onKeySaved) onKeySaved();
+    setTimeout(() => setKeySaved(false), 2500);
+  };
+
+  const handleTestApiKey = async () => {
+    if (!apiKey.trim()) {
+      setTestStatus('error');
+      setTestMessage('Please enter an API key first.');
+      return;
+    }
+
+    setTestStatus('testing');
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Respond with OK.' }] }],
+          }),
+        }
+      );
+
+      if (res.ok) {
+        setTestStatus('success');
+        setTestMessage('Key verified! Google Gemini 1.5 Flash is active and responding.');
+        saveGeminiApiKey(apiKey);
+        setKeySaved(true);
+        if (onKeySaved) onKeySaved();
+      } else {
+        setTestStatus('error');
+        setTestMessage(`Verification failed: HTTP ${res.status}. Check key permissions at Google AI Studio.`);
+      }
+    } catch (e: any) {
+      setTestStatus('error');
+      setTestMessage(`Network connection error: ${e?.message || 'Could not reach Google Gemini API'}`);
+    }
   };
 
   const handleResetAppearance = () => {
@@ -203,6 +284,28 @@ export default function SettingsModal({
           >
             <Compass className="w-3.5 h-3.5" />
             <span>Editorial Lenses</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ai')}
+            className={`py-3 px-3 border-b-2 flex items-center space-x-1.5 transition-colors cursor-pointer ${
+              activeTab === 'ai'
+                ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-bold'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+            id="tab-settings-ai"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            <span>AI Intelligence</span>
+            {apiKey.trim() ? (
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">
+                Active
+              </span>
+            ) : (
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[var(--bg-surface-elevated)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                Key
+              </span>
+            )}
           </button>
         </div>
 
@@ -729,6 +832,177 @@ export default function SettingsModal({
                 >
                   Launch Wizard
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: AI INTELLIGENCE */}
+          {activeTab === 'ai' && (
+            <div className="space-y-6">
+              <div className="p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-lg">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-md bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center text-[var(--accent-primary)] shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-headline text-base font-bold text-[var(--text-primary)] leading-tight">
+                        Google Gemini 1.5 Flash
+                      </h4>
+                      <p className="text-xs text-[var(--text-muted)] font-sans">
+                        Powers 30-second morning briefings, key takeaways, and interest discovery
+                      </p>
+                    </div>
+                  </div>
+                  {apiKey.trim() ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-sans font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Key Configured &amp; Active</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-sans font-medium bg-[var(--bg-surface)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                      <span>Using Local Algorithmic Engine</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Free Key Tutorial Banner */}
+                <div className="my-3 p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md text-xs font-sans text-[var(--text-secondary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                  <div className="space-y-0.5">
+                    <div className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                      <span>100% Free Google AI Studio API Key</span>
+                    </div>
+                    <p className="text-[var(--text-muted)]">
+                      Zero credit card required. Free tier includes up to 15 requests per minute.
+                    </p>
+                  </div>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--accent-subtle)] hover:opacity-90 text-[var(--accent-text)] border border-[var(--accent-border)] text-xs font-semibold whitespace-nowrap cursor-pointer transition-opacity"
+                  >
+                    <span>Get Free Key</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                {/* API Key Input */}
+                <div className="space-y-2 mt-4">
+                  <label className="block text-xs font-sans font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                    Enter Gemini API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      className="w-full px-3 py-2 pr-10 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded text-xs font-mono text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-2.5 top-2.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                      title={showApiKey ? 'Hide key' : 'Show key'}
+                    >
+                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Verification Feedback Banner */}
+                {testStatus !== 'idle' && (
+                  <div
+                    className={`mt-3 p-3 rounded text-xs font-sans flex items-start space-x-2 animate-in fade-in ${
+                      testStatus === 'success'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                        : testStatus === 'error'
+                        ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30'
+                        : 'bg-[var(--accent-subtle)] text-[var(--accent-text)] border border-[var(--accent-border)]'
+                    }`}
+                  >
+                    {testStatus === 'testing' ? (
+                      <Sparkles className="w-4 h-4 shrink-0 animate-spin mt-0.5 text-[var(--accent-primary)]" />
+                    ) : testStatus === 'success' ? (
+                      <Check className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+                    )}
+                    <span>
+                      {testStatus === 'testing'
+                        ? 'Connecting to Google Gemini API & verifying key...'
+                        : testMessage}
+                    </span>
+                  </div>
+                )}
+
+                {/* Key Controls */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5 mt-4 pt-3 border-t border-[var(--border-subtle)]">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveApiKey}
+                      className="px-4 py-1.5 bg-[var(--accent-primary)] text-white hover:opacity-90 rounded text-xs font-sans font-bold shadow-2xs transition-opacity cursor-pointer flex items-center space-x-1.5"
+                    >
+                      {keySaved ? <Check className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      <span>{keySaved ? 'Saved!' : 'Save Key'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTestApiKey}
+                      disabled={testStatus === 'testing' || !apiKey.trim()}
+                      className="px-3.5 py-1.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded text-xs font-sans font-medium transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      {testStatus === 'testing' ? 'Testing...' : 'Test Connection'}
+                    </button>
+                  </div>
+                  {apiKey.trim() && (
+                    <button
+                      type="button"
+                      onClick={handleClearApiKey}
+                      className="text-xs font-sans text-red-500 hover:text-red-600 hover:underline cursor-pointer"
+                    >
+                      Clear / Remove Key
+                    </button>
+                  )}
+                </div>
+
+                {/* Sovereign Data Guarantee */}
+                <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center space-x-2 text-[11px] font-sans text-[var(--text-muted)]">
+                  <ShieldCheck className="w-4 h-4 text-[var(--accent-primary)] shrink-0" />
+                  <span>
+                    Client-Side Sovereignty: Your key is stored exclusively in your browser&apos;s localStorage and is never transmitted or saved to our servers.
+                  </span>
+                </div>
+              </div>
+
+              {/* What Gemini Powers */}
+              <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg space-y-3">
+                <h4 className="text-xs uppercase font-sans font-bold tracking-wider text-[var(--text-muted)]">
+                  What Google Gemini Powers in Daymark
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-sans text-[var(--text-secondary)]">
+                  <div className="p-2.5 rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] space-y-1">
+                    <span className="font-bold text-[var(--text-primary)] block">Executive Intelligence</span>
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      Synthesizes a 30-second morning briefing with 3 actionable takeaways from top reports.
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] space-y-1">
+                    <span className="font-bold text-[var(--text-primary)] block">Adaptive AI Lenses</span>
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      Infers topic interests from your reading behavior and recommends emerging focus areas.
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] space-y-1">
+                    <span className="font-bold text-[var(--text-primary)] block">Zero-Latency Fallback</span>
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      If offline or without a key, algorithmic broadsheet ranking operates with zero delay.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
