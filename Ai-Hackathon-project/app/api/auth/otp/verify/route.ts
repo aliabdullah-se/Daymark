@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbVerifyOtp } from '@/lib/db';
+import { asyncDbVerifyOtp } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = dbVerifyOtp(email, code);
+    const result = await asyncDbVerifyOtp(email, code);
 
     if (!result.success || !result.user) {
       return NextResponse.json(

@@ -25,6 +25,7 @@ export interface Article {
   relevanceScore?: number;
   rankingReason?: string;
   matchedKeywords?: string[];
+  likesCount?: number;
 }
 
 export interface UserAccount {

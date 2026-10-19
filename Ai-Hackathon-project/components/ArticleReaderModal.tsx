@@ -202,15 +202,16 @@ export default function ArticleReaderModal({
             {onLike && (
               <button
                 onClick={() => onLike(article)}
-                className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+                className={`p-2 rounded-lg border text-xs font-sans flex items-center space-x-1.5 transition-colors cursor-pointer ${
                   isLiked
-                    ? 'bg-[#526BFF]/20 text-[#526BFF] border-[#526BFF]/40'
+                    ? 'bg-[#526BFF]/20 text-[#526BFF] border-[#526BFF]/40 font-bold'
                     : 'bg-[#0D1B2C] text-[#A4B3C7] border-[#20344B] hover:text-[#F1F5FA]'
                 }`}
-                title="Like story"
+                title={isLiked ? 'You liked this story' : 'Like story'}
                 aria-label="Like"
               >
                 <ThumbsUp className="w-4 h-4" />
+                <span className="font-mono text-xs font-semibold">{article.likesCount ?? 24}</span>
               </button>
             )}
 
@@ -341,10 +342,30 @@ export default function ArticleReaderModal({
             </div>
           </div>
 
-          {/* External Full Feature Link */}
+          {/* External Full Feature Link & Likes Counter */}
           <div className="mt-10 pt-6 border-t border-[#20344B] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs font-sans text-[#A4B3C7]">
-              Original reporting hosted by <strong className="text-[#F1F5FA]">{article.source.name}</strong>
+            <div className="flex items-center space-x-3">
+              {onLike && (
+                <button
+                  type="button"
+                  onClick={() => onLike(article)}
+                  className={`inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg border text-xs font-sans font-medium transition-all cursor-pointer ${
+                    isLiked
+                      ? 'bg-[#526BFF] text-white border-[#526BFF] font-bold shadow-sm'
+                      : 'bg-[#12243A] text-[#F1F5FA] border-[#20344B] hover:border-[#526BFF]'
+                  }`}
+                  title={isLiked ? 'You liked this post' : 'Like this post'}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  <span>{isLiked ? 'Liked' : 'Like Post'}</span>
+                  <span className="font-mono bg-white/20 px-1.5 py-0.5 rounded text-[11px] font-bold">
+                    {article.likesCount ?? 24}
+                  </span>
+                </button>
+              )}
+              <div className="text-xs font-sans text-[#A4B3C7]">
+                Original reporting hosted by <strong className="text-[#F1F5FA]">{article.source.name}</strong>
+              </div>
             </div>
 
             <a

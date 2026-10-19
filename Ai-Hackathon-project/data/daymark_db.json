@@ -10,9 +10,38 @@
       "isVerified": true,
       "otpCode": "742891",
       "otpExpiresAt": "2026-10-17T15:58:49.374Z"
+    },
+    {
+      "id": "usr_1792444707927",
+      "name": "Sarah Lin",
+      "email": "sarah.lin@example.com",
+      "password": "subscriber123",
+      "paperTitle": "DAYMARK",
+      "createdAt": "2026-10-19T21:18:27.927Z",
+      "isVerified": false,
+      "otpCode": "699084",
+      "otpExpiresAt": "2026-10-19T21:33:27.943Z"
     }
   ],
   "interactions": [
+    {
+      "userId": "reader@daymark.internal",
+      "articleId": "art_sd6pks",
+      "articleTitle": "A Japanese Spacecraft Aims to Bring Back a Bit of a Martian Moon",
+      "category": "science",
+      "action": "upvote",
+      "timestamp": "2026-10-19T21:20:43.851Z",
+      "id": "act_1792444843858_m5gh"
+    },
+    {
+      "userId": "demo-reader",
+      "articleId": "art_sd6pks",
+      "articleTitle": "A Japanese Spacecraft Aims to Bring Back a Bit of a Martian Moon",
+      "category": "science",
+      "action": "upvote",
+      "timestamp": "2026-10-19T21:20:43.785Z",
+      "id": "act_1792444843788_6wvs"
+    },
     {
       "userId": "judge-nascon-2026",
       "articleId": "art_d094hx",
@@ -73,6 +102,22 @@
   "savedEditions": {},
   "suggestedInterests": {
     "demo-reader": [
+      {
+        "id": "sug_graph_1792444844194_0",
+        "topic": "Fault-Tolerant Quantum Computing",
+        "confidence": 92,
+        "reason": "Derived from high curiosity in physics breakthroughs and topological qubits.",
+        "category": "science",
+        "suggestedAt": "2026-10-19T21:20:44.194Z"
+      },
+      {
+        "id": "sug_graph_1792444844194_1",
+        "topic": "In-Vivo CRISPR & Epigenetic Reprogramming",
+        "confidence": 94,
+        "reason": "Inferred from attention to biotechnology, cellular therapy, and longevity research.",
+        "category": "science",
+        "suggestedAt": "2026-10-19T21:20:44.194Z"
+      },
       {
         "id": "sug_graph_1792315533393_0",
         "topic": "Critical Mineral Supply Chains",
@@ -170,6 +215,23 @@
       "code": "742891",
       "expiresAt": "2026-10-17T15:58:49.374Z",
       "verified": true
+    },
+    "sarah.lin@example.com": {
+      "code": "699084",
+      "expiresAt": "2026-10-19T21:33:27.943Z",
+      "verified": false
+    }
+  },
+  "articleLikes": {
+    "art_f79xud": {
+      "likesCount": 31,
+      "users": []
+    },
+    "art_sd6pks": {
+      "likesCount": 44,
+      "users": [
+        "reader@daymark.internal"
+      ]
     }
   }
 }

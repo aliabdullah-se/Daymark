@@ -37,7 +37,7 @@ export default function SignupPage() {
     setPaperTitle('DAYMARK');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -56,42 +56,55 @@ export default function SignupPage() {
 
     setIsLoading(true);
 
-    const newUser: UserAccount = {
-      id: `user-${Date.now()}`,
-      name: cleanName,
-      email: cleanEmail,
-      password,
-      paperTitle: cleanTitle.toUpperCase(),
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          password,
+          paperTitle: cleanTitle.toUpperCase(),
+        }),
+      });
 
-    // Save user and set active session
-    saveStoredUser(newUser);
-    setCurrentUser(newUser);
+      const data = await res.json();
 
-    // Sync preferences for new subscriber
-    const currentPrefs = getStoredPreferences();
-    saveStoredPreferences({
-      ...currentPrefs,
-      readerName: cleanName,
-      newspaperTitle: cleanTitle.toUpperCase(),
-      onboarded: false,
-    });
+      if (data.success) {
+        // Pre-configure local preferences for broadsheet
+        const currentPrefs = getStoredPreferences();
+        saveStoredPreferences({
+          ...currentPrefs,
+          readerName: cleanName,
+          newspaperTitle: cleanTitle.toUpperCase(),
+          onboarded: false,
+        });
 
-    addLearningSignal({
-      type: 'calibrate',
-      articleTitle: `Subscription Initialized: ${cleanTitle.toUpperCase()}`,
-      impactDescription: `New broadsheet created for ${cleanName}. Proceeding to desk calibration.`,
-    });
+        addLearningSignal({
+          type: 'calibrate',
+          articleTitle: `Registration Initialized: ${cleanTitle.toUpperCase()}`,
+          impactDescription: `New subscriber credentials created in MongoDB for ${cleanName}. Verification code dispatched to ${cleanEmail}.`,
+        });
 
-    // Set authentication cookies for Next.js Middleware validation
-    document.cookie = `daymark_token=${btoa(JSON.stringify({ id: newUser.id, email: newUser.email, name: newUser.name }))}; path=/; max-age=604800; SameSite=Lax`;
-    document.cookie = `daymark_otp_verified=true; path=/; max-age=604800; SameSite=Lax`;
+        setSuccessMsg(
+          data.devOtpCode
+            ? `Registration successful! Verification code sent to email (Code: ${data.devOtpCode}). Loading verification desk...`
+            : `Registration successful! Verification code sent to ${cleanEmail}. Loading verification desk...`
+        );
 
-    setSuccessMsg(`Account created for ${cleanName}! Loading calibration desk...`);
-    setTimeout(() => {
-      window.location.href = '/onboarding';
-    }, 400);
+        setTimeout(() => {
+          const dest = `/verify-otp?email=${encodeURIComponent(cleanEmail)}&redirect=${encodeURIComponent(redirectParam || '/onboarding')}`;
+          window.location.href = dest;
+        }, 1200);
+      } else {
+        setError(data.message || 'Registration failed. Please try again.');
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      console.error('Registration network error:', err);
+      setError('Connection error contacting database. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   return (

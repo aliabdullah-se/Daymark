@@ -163,18 +163,19 @@ export default function ArticleCard({
               )}
 
               {/* Feedback controls */}
-              <div className="flex items-center space-x-1.5 no-print">
+              <div className="flex items-center space-x-2 no-print">
                 <button
                   onClick={() => onLike(article)}
-                  className={`p-1.5 rounded transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded text-xs font-sans flex items-center space-x-1.5 transition-all cursor-pointer ${
                     isLiked
                       ? 'bg-[var(--accent-subtle)] text-[var(--accent-primary)] font-bold border border-[var(--accent-border)]'
-                      : 'hover:bg-[var(--bg-surface-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      : 'hover:bg-[var(--bg-surface-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
                   }`}
-                  title="More stories like this"
+                  title={isLiked ? 'You liked this post' : 'Like this post'}
                   aria-label="Like story"
                 >
                   <ThumbsUp className="w-4 h-4" />
+                  <span className="font-mono text-xs font-bold">{article.likesCount ?? 28}</span>
                 </button>
                 <button
                   onClick={() => onDislike(article)}
@@ -245,13 +246,27 @@ export default function ArticleCard({
           {article.description}
         </p>
         <div className="flex items-center justify-between mt-2 pt-1 text-[11px] font-sans text-[var(--text-muted)]">
-          <button
-            onClick={() => onWhyThis(article)}
-            className="flex items-center space-x-1 text-[var(--accent-primary)] hover:underline no-print text-[10px] cursor-pointer"
-          >
-            <Sparkles className="w-2.5 h-2.5" />
-            <span>{article.relevanceScore}% match</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onLike(article)}
+              className={`flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-sans transition-colors cursor-pointer no-print ${
+                isLiked
+                  ? 'bg-[var(--accent-subtle)] text-[var(--accent-primary)] font-bold border border-[var(--accent-border)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)]'
+              }`}
+              title={isLiked ? 'You liked this wire story' : 'Like wire story'}
+            >
+              <ThumbsUp className="w-2.5 h-2.5" />
+              <span className="font-mono text-[10px] font-semibold">{article.likesCount ?? 16}</span>
+            </button>
+            <button
+              onClick={() => onWhyThis(article)}
+              className="flex items-center space-x-1 text-[var(--accent-primary)] hover:underline no-print text-[10px] cursor-pointer"
+            >
+              <Sparkles className="w-2.5 h-2.5" />
+              <span>{article.relevanceScore}% match</span>
+            </button>
+          </div>
           {onRead ? (
             <button
               type="button"
@@ -351,18 +366,19 @@ export default function ArticleCard({
           <span>{article.readTimeMinutes}m read</span>
         </div>
 
-        <div className="flex items-center space-x-1 no-print">
+        <div className="flex items-center space-x-1.5 no-print">
           <button
             onClick={() => onLike(article)}
-            className={`p-1 rounded transition-colors cursor-pointer ${
+            className={`px-2 py-0.5 rounded text-xs font-sans flex items-center space-x-1 transition-all cursor-pointer ${
               isLiked
                 ? 'bg-[var(--accent-subtle)] text-[var(--accent-primary)] font-bold border border-[var(--accent-border)]'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-subtle)] border border-transparent'
             }`}
-            title="More stories like this"
+            title={isLiked ? 'You liked this story' : 'Like story'}
             aria-label="Like"
           >
             <ThumbsUp className="w-3.5 h-3.5" />
+            <span className="font-mono text-[11px] font-bold">{article.likesCount ?? 19}</span>
           </button>
           <button
             onClick={() => onDislike(article)}

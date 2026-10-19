@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbGenerateOtp, dbFindUserByEmail, dbSaveUser } from '@/lib/db';
+import { asyncDbGenerateOtp, asyncDbFindUserByEmail, asyncDbSaveUser } from '@/lib/db';
+import { sendVerificationEmail } from '@/lib/email';
 import { DEMO_JUDGE_USER } from '@/types/news';
 
 export async function POST(req: NextRequest) {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Auto-create or ensure user exists in database
-    let user = dbFindUserByEmail(email);
+    let user = await asyncDbFindUserByEmail(email);
     if (!user) {
       if (email === DEMO_JUDGE_USER.email.toLowerCase()) {
         user = DEMO_JUDGE_USER;
@@ -24,23 +25,26 @@ export async function POST(req: NextRequest) {
           id: `usr_${Date.now()}`,
           name: email.split('@')[0],
           email,
-          paperTitle: `THE ${email.split('@')[0].toUpperCase()} GAZETTE`,
+          paperTitle: 'DAYMARK',
           createdAt: new Date().toISOString(),
           isVerified: false,
         };
       }
-      dbSaveUser(user);
+      await asyncDbSaveUser(user);
     }
 
-    const { code, expiresAt } = dbGenerateOtp(email);
+    const { code, expiresAt } = await asyncDbGenerateOtp(email);
+
+    // Send verification email
+    const emailResult = await sendVerificationEmail(email, code, user.name);
 
     return NextResponse.json({
       success: true,
       message: `A 6-digit Press Verification OTP has been sent to ${email}.`,
       expiresAt,
-      // For testing and evaluation, include the demo code in response
       demoOtpCode: code,
       email,
+      emailSent: emailResult.success && !emailResult.simulated,
     });
   } catch (error: any) {
     console.error('Error generating OTP:', error);

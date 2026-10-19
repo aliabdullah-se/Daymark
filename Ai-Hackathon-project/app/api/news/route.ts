@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllNews } from '@/lib/rss';
 import { NewsTopic } from '@/types/news';
+import { asyncDbGetArticleLikes } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300; // 5 min cache
@@ -15,7 +16,16 @@ export async function GET(request: NextRequest) {
       topics = topicsParam.split(',').map((t) => t.trim() as NewsTopic);
     }
 
-    const articles = await fetchAllNews(topics);
+    const rawArticles = await fetchAllNews(topics);
+
+    // Hydrate articles with persistent likes counts from MongoDB
+    const articleIds = rawArticles.map((a) => a.id);
+    const likesMap = await asyncDbGetArticleLikes(articleIds);
+
+    const articles = rawArticles.map((a) => ({
+      ...a,
+      likesCount: likesMap[a.id] !== undefined ? likesMap[a.id] : 18,
+    }));
 
     return NextResponse.json({
       success: true,

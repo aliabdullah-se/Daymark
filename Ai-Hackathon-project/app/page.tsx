@@ -448,12 +448,24 @@ export default function DaymarkBroadsheetPage() {
     [rankedArticles, leadArticle]
   );
 
-  // Feedback Handlers with Learning Signals
+  // Feedback Handlers with Learning Signals & Real-Time Likes Counter
   const handleLike = (article: ScoredArticle) => {
     const isLiked = feedback.likedArticleIds.includes(article.id);
     const newLiked = isLiked
       ? feedback.likedArticleIds.filter((id) => id !== article.id)
       : [...feedback.likedArticleIds, article.id];
+
+    // Compute updated likes counter in real-time
+    const currentLikes = article.likesCount ?? 20;
+    const updatedLikesCount = isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1;
+
+    // Immediately update local articles state for snappy UI feedback
+    setRawArticles((prev) =>
+      prev.map((a) => (a.id === article.id ? { ...a, likesCount: updatedLikesCount } : a))
+    );
+    if (readingArticle && readingArticle.id === article.id) {
+      setReadingArticle((prev) => (prev ? { ...prev, likesCount: updatedLikesCount } : prev));
+    }
 
     // Remove from disliked if present
     const newDisliked = feedback.dislikedArticleIds.filter((id) => id !== article.id);
@@ -475,6 +487,31 @@ export default function DaymarkBroadsheetPage() {
     setFeedback(updatedFeedback);
     saveStoredFeedback(updatedFeedback);
 
+    // Persist like counter to MongoDB database
+    fetch('/api/articles/like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        articleId: article.id,
+        userEmail: currentUser?.email || 'subscriber@daymark.news',
+        isLiked: !isLiked,
+        articleTitle: article.title,
+        category: article.category,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && typeof data.likesCount === 'number') {
+          setRawArticles((prev) =>
+            prev.map((a) => (a.id === article.id ? { ...a, likesCount: data.likesCount } : a))
+          );
+          if (readingArticle && readingArticle.id === article.id) {
+            setReadingArticle((prev) => (prev ? { ...prev, likesCount: data.likesCount } : prev));
+          }
+        }
+      })
+      .catch((err) => console.warn('Sync like counter warning:', err));
+
     if (!isLiked) {
       addLearningSignal({
         type: 'upvote',
@@ -486,7 +523,7 @@ export default function DaymarkBroadsheetPage() {
       triggerRealtimeAiLearning('upvote', article);
     }
 
-    showToast(isLiked ? 'Removed vote' : `Rank boosted for ${article.category} stories`);
+    showToast(isLiked ? 'Removed like' : `Liked! (${updatedLikesCount} readers agree)`);
   };
 
   const handleDislike = (article: ScoredArticle) => {
@@ -494,6 +531,30 @@ export default function DaymarkBroadsheetPage() {
     const newDisliked = isDisliked
       ? feedback.dislikedArticleIds.filter((id) => id !== article.id)
       : [...feedback.dislikedArticleIds, article.id];
+
+    // If was previously liked, decrement like counter
+    if (feedback.likedArticleIds.includes(article.id)) {
+      const currentLikes = article.likesCount ?? 20;
+      const updatedLikesCount = Math.max(0, currentLikes - 1);
+      setRawArticles((prev) =>
+        prev.map((a) => (a.id === article.id ? { ...a, likesCount: updatedLikesCount } : a))
+      );
+      if (readingArticle && readingArticle.id === article.id) {
+        setReadingArticle((prev) => (prev ? { ...prev, likesCount: updatedLikesCount } : prev));
+      }
+
+      fetch('/api/articles/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          articleId: article.id,
+          userEmail: currentUser?.email || 'subscriber@daymark.news',
+          isLiked: false,
+          articleTitle: article.title,
+          category: article.category,
+        }),
+      }).catch((e) => console.warn(e));
+    }
 
     // Remove from liked if present
     const newLiked = feedback.likedArticleIds.filter((id) => id !== article.id);

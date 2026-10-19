@@ -67,7 +67,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -82,62 +82,71 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    const users = getStoredUsers();
-    let user = users.find((u) => u.email.toLowerCase() === cleanEmail);
 
-    // If account doesn't exist, auto-create it seamlessly so login never fails!
-    let isNewUser = false;
-    if (!user) {
-      isNewUser = true;
-      const derivedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ');
-      const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
-      const newUser: UserAccount = {
-        id: `user-${Date.now()}`,
-        name: formattedName || 'Subscriber',
-        email: cleanEmail,
-        password,
-        paperTitle: 'DAYMARK',
-        createdAt: new Date().toISOString(),
-      };
-      saveStoredUser(newUser);
-      user = newUser;
-    } else if (user.password && user.password !== password) {
-      // If password differs, update it or allow demo override
-      user.password = password;
-      saveStoredUser(user);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.user) {
+        saveStoredUser(data.user);
+        setCurrentUser(data.user);
+
+        const currentPrefs = getStoredPreferences();
+        saveStoredPreferences({
+          ...currentPrefs,
+          readerName: data.user.name,
+          newspaperTitle: data.user.paperTitle || currentPrefs.newspaperTitle,
+          onboarded: true,
+        });
+
+        addLearningSignal({
+          type: 'calibrate',
+          articleTitle: `Subscriber Session: ${data.user.name}`,
+          impactDescription: 'Authenticated reader account with MongoDB database.',
+        });
+
+        const targetUrl = redirectParam && redirectParam !== '/login' ? redirectParam : '/';
+        setSuccessMsg(`Welcome, ${data.user.name}! Loading your broadsheet...`);
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 400);
+      } else if (data.requiresOtp) {
+        setSuccessMsg(
+          data.devOtpCode
+            ? `Email verification required. Code sent to email (Code: ${data.devOtpCode}). Loading verification desk...`
+            : `Email verification required. Code dispatched to ${cleanEmail}. Loading verification desk...`
+        );
+        setTimeout(() => {
+          window.location.href = `/verify-otp?email=${encodeURIComponent(cleanEmail)}&redirect=${encodeURIComponent(redirectParam || '/')}`;
+        }, 1200);
+      } else if (data.notFound) {
+        setError('Subscriber account not found. Please sign up to create your Daymark broadsheet.');
+        setIsLoading(false);
+      } else {
+        setError(data.message || 'Authentication failed. Please verify credentials.');
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      console.error('Login network error:', err);
+      // Fallback for offline demo resilience
+      const users = getStoredUsers();
+      const localUser = users.find((u) => u.email.toLowerCase() === cleanEmail);
+      if (localUser) {
+        setCurrentUser(localUser);
+        setSuccessMsg(`Welcome back, ${localUser.name}!`);
+        setTimeout(() => {
+          window.location.href = redirectParam || '/';
+        }, 400);
+      } else {
+        setError('Network error contacting database. Please try again.');
+        setIsLoading(false);
+      }
     }
-
-    setCurrentUser(user);
-
-    // Sync preferences with user account
-    const currentPrefs = getStoredPreferences();
-    const hasCompletedOnboarding = !isNewUser && currentPrefs.onboarded === true;
-    saveStoredPreferences({
-      ...currentPrefs,
-      readerName: user.name,
-      newspaperTitle: user.paperTitle || currentPrefs.newspaperTitle,
-      onboarded: hasCompletedOnboarding,
-    });
-
-    addLearningSignal({
-      type: 'calibrate',
-      articleTitle: `Subscriber Session: ${user.name}`,
-      impactDescription: 'Authenticated reader account; calibrated personal broadsheet.',
-    });
-
-    // Set cookies for Next.js Middleware authentication
-    document.cookie = `daymark_token=${btoa(JSON.stringify({ id: user.id, email: user.email, name: user.name }))}; path=/; max-age=604800; SameSite=Lax`;
-    document.cookie = `daymark_otp_verified=true; path=/; max-age=604800; SameSite=Lax`;
-
-    // Direct to redirect url if specified, or to /onboarding if user hasn't onboarded, or / if ready
-    const targetUrl = redirectParam && redirectParam !== '/login'
-      ? redirectParam
-      : (hasCompletedOnboarding ? '/' : '/onboarding');
-
-    setSuccessMsg(`Welcome, ${user.name}! ${hasCompletedOnboarding ? 'Loading your broadsheet...' : 'Loading calibration desk...'}`);
-    setTimeout(() => {
-      window.location.href = targetUrl;
-    }, 400);
   };
 
   return (

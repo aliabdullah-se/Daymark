@@ -560,3 +560,34 @@ J. Header AI Key Migration & Sidebar Light Theme Adaptations:
       - `npx tsc --noEmit`: 0 errors.
       - `npm run build`: Production build succeeded across all 18 static & dynamic routes.
       - Visual confirmation via browser testing: Verified clean header without AI button, seamless sidebar light/dark mode contrast, and verified AI configuration workflow in Settings.
+
+K. Live Post Likes Counter & MongoDB Database User Authentication System:
+   1. Real-Time Article Likes Counter:
+      - Added `likesCount?: number;` to the core `Article` data model in `types/news.ts`.
+      - Integrated persistent likes tracking across the entire broadsheet layout:
+        * Hero Lead Story (`components/ArticleCard.tsx`): Displays dynamic numeric likes counter next to the ThumbsUp button with active highlighting.
+        * Standard Article Cards (`components/ArticleCard.tsx`): Responsive likes badge next to the ThumbsUp icon.
+        * The Morning Wire Reports (`components/ArticleCard.tsx`): Compact inline likes button and counter.
+        * Article Reader Modal (`components/ArticleReaderModal.tsx`): Live likes counter in both the top sticky utility bar and the bottom "Like Post" action area.
+      - Implemented atomic real-time updates in `app/page.tsx`: Clicking like increments the counter immediately with a feedback toast, while unliking gracefully decrements it.
+      - Integrated `/api/articles/like` (POST/GET) for database-backed atomic increments and bulk likes hydration in `/api/news`.
+   2. MongoDB Database Integration & Mongoose Models:
+      - Installed and configured `mongoose` with cached connection pooling in `lib/mongodb.ts`.
+      - Built schema-driven database models:
+        * `lib/models/User.ts`: Subscriber accounts (`id`, `name`, `email`, `password`, `paperTitle`, `isVerified`, `otpCode`, `otpExpiresAt`, `preferences`).
+        * `lib/models/Otp.ts`: 6-digit cryptographic verification codes with 1-hour MongoDB TTL auto-expiry index.
+        * `lib/models/ArticleLike.ts`: Article likes counter tracking (`articleId`, `likesCount`, `likedUserEmails`).
+      - Full Zero-Crash Fallback Resilience: If `MONGODB_URI` is not provided or connection times out, seamlessly falls back to local data storage without crashing builds or runtime.
+   3. New User Registration & Email Verification (Sign Up):
+      - Created `/api/auth/register` (POST) to register new subscribers, create user records in MongoDB with `isVerified: false`, and issue a 6-digit OTP authentication code.
+      - Built `lib/email.ts` using `nodemailer` to dispatch broadsheet-styled press verification emails with HTML formatting. If SMTP is unconfigured, outputs simulated code preview for zero-friction evaluation.
+      - Refactored `app/signup/page.tsx` to call `/api/auth/register` and smoothly redirect to `/verify-otp?email=...`.
+      - Updated `/api/auth/otp/verify` to validate codes against MongoDB, set `isVerified: true`, and establish secure session cookies (`daymark_token`, `daymark_otp_verified`).
+   4. Existing User Authentication (Sign In):
+      - Created `/api/auth/login` (POST) to authenticate old/existing users against MongoDB credentials.
+      - If an existing user's email is unverified, automatically re-issues an authentication code and prompts verification.
+      - Refactored `app/login/page.tsx` to authenticate through the API, sync subscriber broadsheet preferences, and log in old users.
+   5. Verification & Testing:
+      - TypeScript typecheck (`npx tsc --noEmit`): 0 errors.
+      - Next.js production build (`npm run build`): All 21 static and dynamic routes compiled cleanly with exit code 0.
+      - Visual confirmation via browser testing: Confirmed live likes counter increments and decrements, verified styled signup and verify-otp flows, and confirmed authenticated transitions.
