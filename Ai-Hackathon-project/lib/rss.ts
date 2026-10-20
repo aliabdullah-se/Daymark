@@ -64,13 +64,13 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function upgradeImageUrl(url: string): string {
+export function upgradeImageUrl(url: string): string {
   if (!url) return url;
 
   // 1. Upgrade NYT images:
   // NYT feeds often serve mediumSquareAt3X (tight square crop) or low-res thumbnails like mThumb/thumbStandard.
   // Upgrading them to threeByTwoMediumAt2X gives a high-resolution, uncropped 3:2 landscape editorial photo.
-  if (url.includes('nytimes.com')) {
+  if (url.includes('nytimes.com') || url.includes('nyt.com')) {
     url = url
       .replace(/-mediumSquareAt3X\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
       .replace(/-mThumb\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
@@ -192,62 +192,79 @@ export async function fetchFeedArticles(source: FeedSource): Promise<Article[]> 
     }
 
     const xmlText = await res.text();
-    const parsed = parser.parse(xmlText);
-
-    let rawItems: any[] = [];
-    if (parsed.rss && parsed.rss.channel && parsed.rss.channel.item) {
-      rawItems = Array.isArray(parsed.rss.channel.item) ? parsed.rss.channel.item : [parsed.rss.channel.item];
-    } else if (parsed.feed && parsed.feed.entry) {
-      rawItems = Array.isArray(parsed.feed.entry) ? parsed.feed.entry : [parsed.feed.entry];
-    }
-
-    const articles: Article[] = [];
-
-    for (const item of rawItems) {
-      const title = stripHtml(typeof item.title === 'string' ? item.title : item.title?.['#text'] || '');
-      const rawDesc = item.description || item.summary || item['content:encoded'] || '';
-      const description = stripHtml(typeof rawDesc === 'string' ? rawDesc : rawDesc?.['#text'] || '');
-
-      let link = '';
-      if (typeof item.link === 'string') {
-        link = item.link;
-      } else if (item.link && item.link['@_href']) {
-        link = item.link['@_href'];
-      } else if (Array.isArray(item.link)) {
-        const alt = item.link.find((l: any) => l['@_rel'] === 'alternate' || !l['@_rel']);
-        link = alt ? alt['@_href'] : item.link[0]?.['@_href'] || '';
-      }
-
-      if (!title || !link) continue;
-
-      const publishedAt = item.pubDate || item.published || item.updated || new Date().toISOString();
-      const imageUrl = extractImage(item);
-      const author = item['dc:creator'] || item.author?.name || undefined;
-      const readTime = estimateReadTime(description);
-
-      articles.push({
-        id: generateSimpleId(link + title),
-        title,
-        description: description || 'No summary provided. Tap to read the full report.',
-        url: link,
-        source: {
-          name: source.name,
-          domain: source.domain,
-        },
-        category: source.category,
-        publishedAt: new Date(publishedAt).toISOString(),
-        imageUrl,
-        author: author ? stripHtml(author) : undefined,
-        readTimeMinutes: readTime,
-      });
-    }
-
+    const articles = parseRssFeed(xmlText, source.name, source.category, source.domain);
     return articles.slice(0, 15); // Take top 15 from each feed
   } catch (error: any) {
     clearTimeout(timeoutId);
     console.warn(`[RSS Error] ${source.name}: ${error?.message || error}`);
     return [];
   }
+}
+
+export function parseRssFeed(
+  xmlText: string,
+  sourceName: string,
+  category: NewsTopic,
+  domain?: string
+): Article[] {
+  const parsed = parser.parse(xmlText);
+
+  let rawItems: any[] = [];
+  if (parsed.rss && parsed.rss.channel && parsed.rss.channel.item) {
+    rawItems = Array.isArray(parsed.rss.channel.item) ? parsed.rss.channel.item : [parsed.rss.channel.item];
+  } else if (parsed.feed && parsed.feed.entry) {
+    rawItems = Array.isArray(parsed.feed.entry) ? parsed.feed.entry : [parsed.feed.entry];
+  }
+
+  const articles: Article[] = [];
+  const resolvedDomain =
+    domain ||
+    (sourceName.toLowerCase().includes('bbc')
+      ? 'bbc.com'
+      : sourceName.toLowerCase().includes('nyt') || sourceName.toLowerCase().includes('times')
+      ? 'nytimes.com'
+      : 'daymark.news');
+
+  for (const item of rawItems) {
+    const title = stripHtml(typeof item.title === 'string' ? item.title : item.title?.['#text'] || '');
+    const rawDesc = item.description || item.summary || item['content:encoded'] || '';
+    const description = stripHtml(typeof rawDesc === 'string' ? rawDesc : rawDesc?.['#text'] || '');
+
+    let link = '';
+    if (typeof item.link === 'string') {
+      link = item.link;
+    } else if (item.link && item.link['@_href']) {
+      link = item.link['@_href'];
+    } else if (Array.isArray(item.link)) {
+      const alt = item.link.find((l: any) => l['@_rel'] === 'alternate' || !l['@_rel']);
+      link = alt ? alt['@_href'] : item.link[0]?.['@_href'] || '';
+    }
+
+    if (!title || !link) continue;
+
+    const publishedAt = item.pubDate || item.published || item.updated || new Date().toISOString();
+    const imageUrl = extractImage(item);
+    const author = item['dc:creator'] || item.author?.name || undefined;
+    const readTime = estimateReadTime(description);
+
+    articles.push({
+      id: generateSimpleId(link + title),
+      title,
+      description: description || 'No summary provided. Tap to read the full report.',
+      url: link,
+      source: {
+        name: sourceName,
+        domain: resolvedDomain,
+      },
+      category,
+      publishedAt: new Date(publishedAt).toISOString(),
+      imageUrl,
+      author: author ? stripHtml(author) : undefined,
+      readTimeMinutes: readTime,
+    });
+  }
+
+  return articles;
 }
 
 export async function fetchAllNews(selectedTopics?: NewsTopic[]): Promise<Article[]> {
