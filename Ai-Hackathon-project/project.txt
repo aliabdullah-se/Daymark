@@ -1,0 +1,349 @@
+# Daymark — Your world, clearly delivered.
+# NaSCon'26 Challenge: Personalized Digital Morning Newspaper
+# Comprehensive Project Progress, Architecture & Verification Specification
+
+Last Updated: October 2026
+Production Build: Next.js 14.2.35 (App Router, TypeScript, Tailwind CSS, Mongoose)
+Total Operational Cost: PKR 0 / $0.00 USD (100% Zero-Budget Free-Tier Compliance)
+GitHub Repository: https://github.com/aliabdullah-se/Daymark.git (Branch: main)
+Live Vercel Deployment: https://daymark-news.vercel.app/
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1. Executive Product Overview & Brand Identity
+2. Zero-Budget Architectural Compliance (PKR 0 Total Budget)
+3. Full Route Inventory (21 Compiled Routes & Edge Middleware)
+4. Core Engine Implementations & Algorithmic Logic
+5. Authentication, Security & Email OTP Verification System
+6. Data Persistence & Database Schemas (MongoDB + Local Fallback)
+7. Production Verification & Build Audit
+8. Chronological Implementation History & Changelog (Sections A–K)
+
+================================================================================
+1. EXECUTIVE PRODUCT OVERVIEW & BRAND IDENTITY
+================================================================================
+Daymark reimagines the morning news routine as a finite, elegant, high-signal
+digital broadsheet. Instead of endless algorithmic dopamine feeds, Daymark delivers
+a personalized morning newspaper curated to the reader's intellectual lenses,
+complete with an executive 3-takeaway intelligence box, lead cover story, audio
+dispatch, and a deliberate "Outside Your Bubble" blindspot section to prevent
+echo chambers.
+
+- Product Name: DAYMARK
+- Official Tagline: "Your world, clearly delivered."
+- Visual Aesthetic: Dual-theme editorial broadsheet:
+  * "Daily Broadsheet" (Light Mode): Warm ivory canvas (#F7F5EF), deep ink charcoal
+    typography (#20211F), crisp borders (#E5DFD1), and forest green accents.
+  * "Midnight Editorial" (Dark Mode): Rich midnight navy (#07111F / #0D1B2C),
+    luminous typography (#F1F5FA), and vibrant cobalt blue accents (#526BFF).
+- Core Principles:
+  * Finite Reading Experience: 5, 15, or 30-minute editions calibrated to reader pace.
+  * Transparent Scoring: Explainable algorithmic relevance scores (0-100%) on every story.
+  * Privacy Sovereignty: Zero ads, zero commercial tracking, and client-side storage.
+  * Contextual Printing: Per-edition Print/PDF engine producing ink-saving paper broadsheets.
+
+================================================================================
+2. ZERO-BUDGET ARCHITECTURAL COMPLIANCE (PKR 0 TOTAL BUDGET)
+================================================================================
+Every subsystem operates at strictly $0.00 cost with no credit card requirement:
+
+1. News Ingestion: 100% Free Public RSS Feeds (BBC News, The New York Times,
+   Ars Technica, NPR News). Fast parallel server-side fetch with 5-minute caching
+   (next: { revalidate: 300 }) and 6-second timeout abort controllers.
+2. AI / Executive Synthesis:
+   - Free Google Gemini 1.5 Flash via REST API (using free Google AI Studio keys).
+   - Deterministic Fallback Engine: When no API key is set, all summaries, takeaways,
+     and algorithmic explanations execute locally with zero latency.
+3. Audio Dispatch Engine: Native Browser Web Speech API (SpeechSynthesis). 100%
+   free, client-side, zero token limits or recurring charges.
+4. Database & Storage:
+   - Primary: MongoDB Cloud (Mongoose ODM) with cached connection pooling.
+   - Resilient Fallback: Atomic local JSON database at `data/daymark_db.json`.
+5. Email Dispatch: Nodemailer service with standard SMTP support and automated
+   simulated fallback for testing without configured mail servers.
+6. PDF Broadsheet Export: Browser `@media print` CSS engine in `globals.css`
+   producing pure-white, high-contrast, multi-column paper broadsheets.
+7. Hosting & CI/CD: Vercel Hobby Tier auto-deploying on every Git push to `main`.
+
+================================================================================
+3. FULL ROUTE INVENTORY (21 COMPILED ROUTES & EDGE MIDDLEWARE)
+================================================================================
+The application compiles 21 static/dynamic routes and an edge security layer:
+
+1. `/` (Today's Live Morning Broadsheet) [PROTECTED]:
+   - 3-Tier Professional Header: Utility Bar, Centered Masthead, Editorial Section Row.
+   - Executive 3-Takeaway Intelligence Box synthesized from top stories.
+   - Lead Cover Story with headline, drop cap, reading time pill, and live likes counter.
+   - Front Page Priority Reports with topic badges, relevance match %, and likes counter.
+   - The Morning Wire sidebar with compact inline like buttons and fast dispatch.
+   - "Outside Your Bubble" blindspot section to combat confirmation bias.
+   - Real-Time Likes Counter: Interactive thumbs up button with instant state update.
+   - Contextual Print / PDF Export Button: Exports only the active newspaper edition.
+
+2. `/dashboard` (Daymark Page Directory):
+   - Grid view of all 9 editorial broadsheet sections (Technology, World, Markets,
+     Science, Health, Climate, Culture, Commentary, Saved Clippings).
+   - Dynamic article counters, quick-filter shortcuts, and subscriber statistics.
+
+3. `/login` (Press Room Sign-In):
+   - Authenticates existing subscribers against MongoDB credentials via `/api/auth/login`.
+   - 1-Click "Instant Demo Login (Judge Access)" pre-authenticates `DEMO_JUDGE_USER`.
+   - Seamlessly prompts unverified users for email OTP verification.
+
+4. `/signup` (Subscription Desk):
+   - Fields: Full Name, Subscriber Email, Password, Custom Newspaper Title.
+   - Submits to `/api/auth/register`, registers user in MongoDB (`isVerified: false`),
+     issues a 6-digit OTP code to subscriber's email, and redirects to `/verify-otp`.
+
+5. `/verify-otp` (Press Verification Desk):
+   - 6-digit auto-advancing OTP digit inputs with paste support.
+   - Quick-Fill sample button (code `742891`) for rapid demonstration.
+   - Validates code via `/api/auth/otp/verify`, updates MongoDB to `isVerified: true`,
+     sets session cookies, and enters the morning broadsheet.
+
+6. `/onboarding` (Editorial Calibration Desk):
+   - 3-Step Broadsheet Setup: Core editorial sections, keyword lenses, reading pace.
+
+7. `/archive` (Historical Broadsheet Registry):
+   - Preserves historical daily editions by date snapshot.
+   - Interactive Reader Modal and contextual edition-only printing.
+
+8. `/profile` (The Learning Brain & Recommendation Telemetry):
+   - Real-time affinity gauges across 8 editorial desks (0-100%).
+   - Engagement audit trail and AI Suggested Interests desk.
+
+9. `/about` (Editorial Mission & Architecture):
+   - Explains Daymark's deterministic curation, zero-hallucination policy, and ethics.
+
+10. `/privacy` (Privacy Policy & Data Sovereignty):
+    - Details 100% client-side storage, cookie usage, and zero third-party telemetry.
+
+11. `/api/news` (GET):
+    - Fetches and parses RSS feeds, hydrates articles with persistent likes from MongoDB.
+
+12. `/api/articles/like` (POST/GET):
+    - Atomically increments/decrements article likes in MongoDB and retrieves likes maps.
+
+13. `/api/auth/register` (POST):
+    - Registers new subscriber in MongoDB, generates 6-digit OTP, dispatches email.
+
+14. `/api/auth/login` (POST):
+    - Authenticates existing users against MongoDB and verifies email status.
+
+15. `/api/auth/otp/send` (POST):
+    - Issues a fresh 6-digit verification code and dispatches email via Nodemailer.
+
+16. `/api/auth/otp/verify` (POST):
+    - Validates code against MongoDB and establishes authenticated session cookies.
+
+17. `/api/auth/me` (GET):
+    - Returns current authenticated subscriber identity.
+
+18. `/api/ai/gemini` (POST):
+    - Server-side executive summary generation via Google Gemini 1.5 Flash.
+
+19. `/api/ai/learn` (GET/POST):
+    - Real-time adaptive AI learning signal processing and suggested interest generation.
+
+20. `middleware.ts` (Edge Security Layer):
+    - Protects `/`, `/onboarding`, `/profile`, `/archive` routes via cookie validation.
+
+================================================================================
+4. CORE ENGINE IMPLEMENTATIONS & ALGORITHMIC LOGIC
+================================================================================
+1. Deterministic Multi-Factor Ranking Engine (`lib/ranking.ts`):
+   - Relevance Score = (Topic Affinity * 35%) + (Keyword Matches * 30%) +
+     (Source Quality * 15%) + (Recency Decay * 20%) - Penalty Modifiers.
+   - Transparent scoring breakdown displayed in the "Why this?" modal.
+
+2. Adaptive Learning Signals Engine (`lib/storage.ts` & `/api/ai/learn`):
+   - Upvoting / Liking boosts topic affinity (+1.5) and elevates keyword scores.
+   - Downvoting / Dismissing penalizes topic affinity (-1.2) to refine future editions.
+   - Dynamic interest suggestion discovers emerging topics based on reading history.
+
+3. Live Post Likes Counter Engine:
+   - Articles carry `likesCount` hydrated from MongoDB.
+   - Instant optimistic UI update on click (+1/-1) with toast confirmation.
+   - Atomic persistence to MongoDB via `findOneAndUpdate` with user tracking.
+
+================================================================================
+5. AUTHENTICATION, SECURITY & EMAIL OTP VERIFICATION SYSTEM
+================================================================================
+- Double-Authentication Flow:
+  * Sign Up: Submits user data -> Stores unverified user in MongoDB -> Issues 6-digit OTP
+    via email (`lib/email.ts`) -> User verifies OTP -> Account activated with cookies.
+  * Sign In: Validates email & password in MongoDB -> Verifies email confirmation ->
+    Sets authenticated session cookies (`daymark_token`, `daymark_otp_verified`).
+- Email Dispatch:
+  * Production SMTP: Configured via `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`,
+    `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`. Dispatches broadsheet HTML emails.
+  * Dev / Testing Fallback: When SMTP is omitted, logs code to console and provides
+    instant code preview in response for zero-friction evaluation.
+- Hackathon Judge Access: Pre-configured sample credentials (`742891`) allow 1-click
+  evaluation without requiring an external email mailbox.
+
+================================================================================
+6. DATA PERSISTENCE & DATABASE SCHEMAS (MONGODB + LOCAL FALLBACK)
+================================================================================
+- Mongoose Database Models:
+  * `User`: `{ id, name, email, password, paperTitle, isVerified, otpCode, otpExpiresAt, preferences, createdAt }`
+  * `Otp`: `{ email, code, expiresAt, verified, createdAt }` (with 1-hour TTL auto-deletion)
+  * `ArticleLike`: `{ articleId, likesCount, likedUserEmails, updatedAt }`
+- Local File Fallback: `data/daymark_db.json` mirrors all schemas to guarantee zero-crash
+  operation if MongoDB connection strings are omitted or offline.
+
+================================================================================
+7. PRODUCTION VERIFICATION & BUILD AUDIT
+================================================================================
+- TypeScript Compilation (`npx tsc --noEmit`): 0 errors.
+- Production Build (`npm run build`): Exit code 0 across all 21 routes.
+- Browser Verification:
+  * Live likes counter tested on Cover Story, Wire items, and Standard cards.
+  * Article Reader Modal top and bottom likes counters verified.
+  * Styled Sign Up and OTP Verification flows tested with 1-click fill.
+  * Dual-theme switching (Daily Broadsheet vs. Midnight Editorial) verified.
+  * Per-edition contextual Print/PDF preview verified.
+
+================================================================================
+8. CHRONOLOGICAL IMPLEMENTATION HISTORY & CHANGELOG (SECTIONS A–K)
+================================================================================
+A. Core Broadsheet Foundation: RSS ingestion, multi-column layout, Web Speech audio.
+B. Algorithmic Ranking Engine: Deterministic multi-factor scoring and bubble-breaker.
+C. Reader Brain & Telemetry: Interactive affinity sliders and historical learning signals.
+D. Dual-Theme Design System: Ivory Broadsheet (Light) and Midnight Editorial (Dark).
+E. Identity Verification Desk: 6-digit auto-advancing OTP verification and demo bypass.
+F. Historical Edition Archive: Edition snapshots, interactive reader modal, and archiving.
+G. Branding Alignment: Replaced legacy names with DAYMARK ("Your world, clearly delivered.").
+H. 3-Tier Professional Header: Section A Utility Bar, Section B Masthead, Section C Sections.
+I. Contextual Per-Edition Print / PDF Export: Removed global print button; added scoped
+   edition buttons producing ink-saving pure-white multi-column paper broadsheets.
+J. Header AI Key Migration & Sidebar Light Theme: Moved AI key configuration to Settings
+   modal with live connection test; added complete Light theme support to the sidebar.
+K. Live Post Likes Counter & MongoDB Database User Authentication:
+   - Added live numeric likes counter across Hero story, Standard cards, Wire reports,
+     and Article Reader Modal with real-time increment/decrement.
+   - Built MongoDB integration with Mongoose models for Users, OTPs, and Article Likes.
+   - Implemented new user registration (`/api/auth/register`) with email OTP verification.
+   - Implemented existing user authentication (`/api/auth/login`) with credential validation.
+   - Built `lib/email.ts` supporting production SMTP and simulated evaluation modes.
+   - Verified clean production build (21 routes, 0 errors) and pushed to GitHub main.
+L. High-Definition Editorial Images, Gemini Broadsheet Synthesis, News Chatbot & Audio Briefing:
+   - Image Quality & Framing:
+     * Upgraded RSS image extraction in `lib/rss.ts` to automatically prioritize highest resolution
+       enclosures and media tags.
+     * Implemented dynamic CDN URL upgrading for BBC News (`/news/240/` -> `/news/1024/`, `/ace/standard/1024/`)
+       and The New York Times (upgraded `-mediumSquareAt3X.jpg`, `-mThumb.jpg`, `-thumbStandard.jpg` to
+       un-cropped, crystal-clear 3:2 landscape `-threeByTwoMediumAt2X.jpg` editorial photos).
+     * Enhanced card image styling in `components/ArticleCard.tsx` with `aspect-[16/10] sm:aspect-[16/9]`
+       and `object-[center_25%]` so portraits and news photos never cut off subjects at the forehead.
+   - Active Gemini AI Broadsheet Synthesis:
+     * Made "Synthesize with Gemini AI" actively trigger on click without blocking for key configuration.
+     * Enriched takeaways with full source metadata, category tags, and an Executive Broadsheet Synthesis banner.
+     * Integrated server-side Gemini 1.5 Flash with fallback to in-house broadsheet intelligence agent.
+   - DAYMARK News Intelligence Chatbot ("Ask Gemini AI"):
+     * Built dedicated `/api/ai/chat` endpoint injecting full edition context (135+ verified stories)
+       into conversational Gemini 1.5 Flash agent with source citations and structured markdown.
+     * Built `components/NewsChatbot.tsx` with quick suggestion chips, message thread, response copying,
+       text-to-speech audio readout, conversation clearing, and minimize/expand window controls.
+     * Added floating "Ask Gemini AI" launcher badge and masthead utility bar "Ask AI" button.
+   - Interactive Audio Briefing ("Audio Brief"):
+     * Made "Audio Brief" button in `components/Masthead.tsx` narrate a complete synthesized morning dispatch
+       (greeting, executive summary, 3 key takeaways, cover story, and wire highlights).
+     * Updated `components/StickyAudioPlayer.tsx` to support seamless Play/Pause/Resume without unmounting,
+       playback speed toggle (1x, 1.25x, 1.5x), live soundwave equalizer, and Chromium heartbeat workaround.
+     * Verified all features via automated browser subagent screenshots with 0 TypeScript/build errors.
+
+M. Professional Editorial Lens Links & Hashtag Removal:
+   - Completely eradicated informal '#' social hashtags from the entire application (Masthead.tsx,
+     SettingsModal.tsx, profile/page.tsx, onboarding/page.tsx).
+   - Replaced static labels with interactive, clickable editorial lens filter buttons:
+     * Core desks (Technology, World Affairs, Markets, Science) toggle broadsheet desk views.
+     * Custom intellectual lenses (Artificial Intelligence, Space Exploration, Clean Energy)
+       immediately execute targeted keyword searches across today's edition with active pill styling.
+   - Populated previously empty spaces with professional utility actions: "Clear Lens Filter",
+     "Ask AI" quick link, and "Adjust Lenses".
+   - Verified via automated browser testing with 100% type safety and responsive layout.
+
+N. Contextual Per-Magazine Print Buttons & Selective Broadsheet Export:
+   - Dedicated Print Button on Every Magazine Section:
+     * Replaced the single front-page button pattern with dedicated contextual print buttons attached
+       directly to every magazine across the website.
+     * Added Section A Header Rule ("Front Page & Morning Wire Magazine") with direct "Print Magazine" action.
+     * Enhanced components/SectionBlock.tsx with header print actions for Section B (Technology,
+       Computation & AI), Section C (Global Geopolitics & World Affairs), Section D (Markets, Capital
+       & Commerce), Section E (Science & Cosmos), and Section F (Culture & Commentary).
+     * Integrated per-issue print actions into components/SavedEditionsDrawer.tsx allowing readers
+       to export any archived edition directly.
+   - Top Edition Bar & Magazine Quick Selector:
+     * Replaced the ambiguous single print button on the front of the website with distinct
+       "Print Full Broadsheet" and "Print Magazine..." buttons side by side.
+     * When filtered to any specific desk, dynamically displays "Print [Desk] Magazine".
+   - Interactive Magazine Export Modal (components/PrintPreviewBanner.tsx):
+     * Displays the active magazine target, story count, and ink-saving PDF instructions.
+     * Features an interactive quick selector allowing the reader to switch between any of their
+       favourite magazines on the fly before exporting.
+   - Selective Print Broadsheet Isolation:
+     * When an individual magazine is printed, automatically isolates that specific magazine
+       in @media print, rendering a dedicated magazine masthead and its curated articles while
+       suppressing unrelated sections.
+     * When full broadsheet is selected, exports the complete multi-section edition.
+   - Verified via browser subagent with interactive testing, screenshot capture, and recording.
+   - Direct Print Trigger & Headline Visibility Engine Fix:
+     * Fixed critical print rendering bug where global `button { display: none !important; }` in @media print
+       accidentally hid article card headlines (which are wrapped in interactive reader buttons).
+     * Implemented explicit typography styling for `h1 button, h2 button, h3 button, h4 button, [class*="headline"] button`
+       in globals.css so all headlines render with full editorial weight, font sizes, and black ink.
+     * Fixed race condition in PrintPreviewModal where closing the modal synchronously with print confirmation
+       reset selectedPrintMagazine before browser spooling. Implemented 150ms DOM flush delay and 2500ms
+       target retention.
+     * Connected each section's "Print Magazine" button to immediately trigger direct print execution with
+       dynamic document title, browser prompt, and instant toast confirmation.
+
+O. Ultimate End-to-End QA, Repair, Hardening & Production Release Mission:
+   - Full Automated Test Suite Implementation (25/25 Passing Tests, 5 Suites, Node.js Test Runner via tsx):
+     1. Authentication & Account Lifecycle (tests/auth_lifecycle.test.ts - 6/6 PASS):
+        * Validates 6-digit numeric OTP generation with 15-minute expiration window.
+        * Validates unverified user database persistence (isVerified: false).
+        * Rejects invalid, malformed, or expired OTP codes.
+        * Successfully verifies valid OTP codes and toggles isVerified: true.
+        * Prevents replay attacks (OTP consumption invalidates token for subsequent attempts).
+        * Validates Demo Judge account pre-initialization and authorization.
+     2. Algorithm Ranking Engine (tests/ranking.test.ts - 5/5 PASS):
+        * Verifies topic alignment scoring (+25 to +40 points).
+        * Verifies custom intellectual lenses matching and keyword score boosts.
+        * Verifies feedback score adjustments (+20 points for upvoted stories, -45 points penalty for disliked).
+        * Verifies strict exclusion of skipped articles when includeSkipped is false.
+        * Verifies strict descending relevance sorting across all articles.
+     3. Personalization & Self-Training Pipeline (tests/personalization.test.ts - 3/3 PASS):
+        * Verifies distinct initial rankings between User A (Tech/AI) and User B (World/Markets).
+        * Controlled feedback experiment: Reproducibly demonstrates that liking an article raises category
+          and keyword affinity scores in future recommendation calls.
+        * Verifies strict cross-user isolation: User A feedback never leaks into User B preferences or scores.
+     4. RSS Ingestion & Editorial Enhancement Pipeline (tests/rss_pipeline.test.ts - 2/2 PASS):
+        * Tests XML feed parsing into normalized Article entities with read time estimation.
+        * Validates high-definition image upgrading for BBC News (/news/1024/) and NYT (-threeByTwoMediumAt2X.jpg).
+     5. Live E2E API Verification Suite (tests/e2e_api.test.ts - 9/9 PASS):
+        * Live HTTP tests against active dev server on http://localhost:3000:
+        * GET /api/news (status 200, schema validation).
+        * POST /api/auth/register (status 200, creates subscriber account).
+        * POST /api/auth/otp/send (status 200, dispatches 6-digit OTP code).
+        * POST /api/auth/otp/verify (status 200, verifies account and sets session cookies).
+        * POST /api/auth/login (status 200, validates credentials and issues session token).
+        * POST /api/articles/like (status 200, increments like counter and logs interaction).
+        * GET /api/articles/like (status 200, retrieves multi-article like counts).
+        * POST /api/ai/chat (status 200, delivers structured editorial intelligence response).
+        * POST /api/ai/learn (status 200, records reading telemetry and returns knowledge graph suggestions).
+   - Core Security & Architecture Defect Resolutions:
+     * P0 Security: Fixed password authentication bypass in app/api/auth/login/route.ts where an empty string ("")
+       could bypass validation if user.password was configured.
+     * P1 Auth Lifecycle: Fixed OTP replay vulnerability in lib/db.ts by enforcing entry.verified check, and
+       synchronized identical OTP code generation between MongoDB and local JSON fallback in asyncDbGenerateOtp.
+     * P1 Edge Middleware: Added /dashboard to isProtectedRoute array in middleware.ts preventing unauthenticated access.
+     * P2 RSS Ingestion: Extended upgradeImageUrl in lib/rss.ts to match static01.nyt.com alongside nytimes.com,
+       ensuring editorial thumbnails upgrade to crystal-clear 3:2 landscape photos.
+   - Production Build & Deployment Audit:
+     * Clean production build via `next build` (Next.js 14.2.35): 22 static and dynamic routes compiled with 0 errors.
+     * Edge Middleware compiled (26.7 kB).
+     * All 10 core HTTP routes verified live with 200 OK status codes.
+     * GitHub CI/CD automated deployment linked to live Vercel production at https://daymark-news.vercel.app/.

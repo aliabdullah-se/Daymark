@@ -299,3 +299,51 @@ N. Contextual Per-Magazine Print Buttons & Selective Broadsheet Export:
        target retention.
      * Connected each section's "Print Magazine" button to immediately trigger direct print execution with
        dynamic document title, browser prompt, and instant toast confirmation.
+
+O. Ultimate End-to-End QA, Repair, Hardening & Production Release Mission:
+   - Full Automated Test Suite Implementation (25/25 Passing Tests, 5 Suites, Node.js Test Runner via tsx):
+     1. Authentication & Account Lifecycle (tests/auth_lifecycle.test.ts - 6/6 PASS):
+        * Validates 6-digit numeric OTP generation with 15-minute expiration window.
+        * Validates unverified user database persistence (isVerified: false).
+        * Rejects invalid, malformed, or expired OTP codes.
+        * Successfully verifies valid OTP codes and toggles isVerified: true.
+        * Prevents replay attacks (OTP consumption invalidates token for subsequent attempts).
+        * Validates Demo Judge account pre-initialization and authorization.
+     2. Algorithm Ranking Engine (tests/ranking.test.ts - 5/5 PASS):
+        * Verifies topic alignment scoring (+25 to +40 points).
+        * Verifies custom intellectual lenses matching and keyword score boosts.
+        * Verifies feedback score adjustments (+20 points for upvoted stories, -45 points penalty for disliked).
+        * Verifies strict exclusion of skipped articles when includeSkipped is false.
+        * Verifies strict descending relevance sorting across all articles.
+     3. Personalization & Self-Training Pipeline (tests/personalization.test.ts - 3/3 PASS):
+        * Verifies distinct initial rankings between User A (Tech/AI) and User B (World/Markets).
+        * Controlled feedback experiment: Reproducibly demonstrates that liking an article raises category
+          and keyword affinity scores in future recommendation calls.
+        * Verifies strict cross-user isolation: User A feedback never leaks into User B preferences or scores.
+     4. RSS Ingestion & Editorial Enhancement Pipeline (tests/rss_pipeline.test.ts - 2/2 PASS):
+        * Tests XML feed parsing into normalized Article entities with read time estimation.
+        * Validates high-definition image upgrading for BBC News (/news/1024/) and NYT (-threeByTwoMediumAt2X.jpg).
+     5. Live E2E API Verification Suite (tests/e2e_api.test.ts - 9/9 PASS):
+        * Live HTTP tests against active dev server on http://localhost:3000:
+        * GET /api/news (status 200, schema validation).
+        * POST /api/auth/register (status 200, creates subscriber account).
+        * POST /api/auth/otp/send (status 200, dispatches 6-digit OTP code).
+        * POST /api/auth/otp/verify (status 200, verifies account and sets session cookies).
+        * POST /api/auth/login (status 200, validates credentials and issues session token).
+        * POST /api/articles/like (status 200, increments like counter and logs interaction).
+        * GET /api/articles/like (status 200, retrieves multi-article like counts).
+        * POST /api/ai/chat (status 200, delivers structured editorial intelligence response).
+        * POST /api/ai/learn (status 200, records reading telemetry and returns knowledge graph suggestions).
+   - Core Security & Architecture Defect Resolutions:
+     * P0 Security: Fixed password authentication bypass in app/api/auth/login/route.ts where an empty string ("")
+       could bypass validation if user.password was configured.
+     * P1 Auth Lifecycle: Fixed OTP replay vulnerability in lib/db.ts by enforcing entry.verified check, and
+       synchronized identical OTP code generation between MongoDB and local JSON fallback in asyncDbGenerateOtp.
+     * P1 Edge Middleware: Added /dashboard to isProtectedRoute array in middleware.ts preventing unauthenticated access.
+     * P2 RSS Ingestion: Extended upgradeImageUrl in lib/rss.ts to match static01.nyt.com alongside nytimes.com,
+       ensuring editorial thumbnails upgrade to crystal-clear 3:2 landscape photos.
+   - Production Build & Deployment Audit:
+     * Clean production build via `next build` (Next.js 14.2.35): 22 static and dynamic routes compiled with 0 errors.
+     * Edge Middleware compiled (26.7 kB).
+     * All 10 core HTTP routes verified live with 200 OK status codes.
+     * GitHub CI/CD automated deployment linked to live Vercel production at https://daymark-news.vercel.app/.
