@@ -36,7 +36,7 @@ import SectionBlock from '@/components/SectionBlock';
 import OnboardingModal from '@/components/OnboardingModal';
 import WhyThisModal from '@/components/WhyThisModal';
 import SavedEditionsDrawer from '@/components/SavedEditionsDrawer';
-import PrintPreviewModal from '@/components/PrintPreviewBanner';
+import PrintPreviewModal, { MagazineOption } from '@/components/PrintPreviewBanner';
 import GeminiKeyModal from '@/components/GeminiKeyModal';
 import SettingsModal from '@/components/SettingsModal';
 import AppSidebar from '@/components/AppSidebar';
@@ -81,6 +81,12 @@ export default function DaymarkBroadsheetPage() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isEditionsOpen, setIsEditionsOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [selectedPrintMagazine, setSelectedPrintMagazine] = useState<{
+    id: string;
+    title: string;
+    sectionCode?: string;
+    articles: (ScoredArticle | Article)[];
+  } | null>(null);
   const [whyThisArticle, setWhyThisArticle] = useState<ScoredArticle | null>(null);
   const [selectedTopicFilter, setSelectedTopicFilter] = useState<NewsTopic | 'all'>('all');
   const [activeEdition, setActiveEdition] = useState<SavedEdition | null>(null);
@@ -361,14 +367,6 @@ export default function DaymarkBroadsheetPage() {
     };
   }, [activeEdition, showBookmarksOnly, selectedTopicFilter, rankedArticles.length, preferences.newspaperTitle]);
 
-  const handleTriggerEditionPrint = () => {
-    if (rankedArticles.length === 0) {
-      showToast('This edition contains no articles to export');
-      return;
-    }
-    setIsPrintModalOpen(true);
-  };
-
   // Lead, Secondary, and Wire splits
   const leadArticle = rankedArticles[0] || null;
   const secondaryArticles = rankedArticles.slice(1, 5);
@@ -454,6 +452,181 @@ export default function DaymarkBroadsheetPage() {
       ),
     [rankedArticles, leadArticle]
   );
+
+  // Magazine Print Handlers & Contextual Export Engine
+  const handlePrintMagazine = useCallback(
+    (title: string, sectionCode: string, articles: (ScoredArticle | Article)[]) => {
+      if (!articles || articles.length === 0) {
+        showToast('This magazine contains no stories to export');
+        return;
+      }
+      setSelectedPrintMagazine({
+        id: sectionCode.toLowerCase().replace(/\s+/g, '-'),
+        title,
+        sectionCode,
+        articles,
+      });
+      setIsPrintModalOpen(true);
+    },
+    []
+  );
+
+  const handleSelectMagazineToPrint = useCallback(
+    (id: string) => {
+      if (id === 'all') {
+        setSelectedPrintMagazine(null);
+        return;
+      }
+      if (id === 'frontpage') {
+        const fpArticles = [leadArticle, ...secondaryArticles, ...wireBriefs].filter(Boolean) as ScoredArticle[];
+        setSelectedPrintMagazine({
+          id: 'frontpage',
+          title: 'Front Page & Morning Wire Magazine',
+          sectionCode: 'SECTION A',
+          articles: fpArticles,
+        });
+        return;
+      }
+      if (id === 'technology') {
+        const list = rankedArticles.filter((a) => a.category === 'technology');
+        setSelectedPrintMagazine({
+          id: 'technology',
+          title: 'Technology, Computation & Artificial Intelligence Magazine',
+          sectionCode: 'SECTION B',
+          articles: list.length > 0 ? list : techArticles,
+        });
+        return;
+      }
+      if (id === 'world') {
+        const list = rankedArticles.filter((a) => a.category === 'world');
+        setSelectedPrintMagazine({
+          id: 'world',
+          title: 'Global Geopolitics & World Affairs Magazine',
+          sectionCode: 'SECTION C',
+          articles: list.length > 0 ? list : worldArticles,
+        });
+        return;
+      }
+      if (id === 'business') {
+        const list = rankedArticles.filter((a) => a.category === 'business');
+        setSelectedPrintMagazine({
+          id: 'business',
+          title: 'Markets, Capital & Global Commerce Magazine',
+          sectionCode: 'SECTION D',
+          articles: list.length > 0 ? list : businessArticles,
+        });
+        return;
+      }
+      if (id === 'science') {
+        const list = rankedArticles.filter((a) => a.category === 'science');
+        setSelectedPrintMagazine({
+          id: 'science',
+          title: 'Science, Cosmos & Earth Systems Magazine',
+          sectionCode: 'SECTION E',
+          articles: list.length > 0 ? list : scienceArticles,
+        });
+        return;
+      }
+      if (id === 'opinion') {
+        const list = rankedArticles.filter((a) => !['technology', 'world', 'business', 'science'].includes(a.category));
+        setSelectedPrintMagazine({
+          id: 'opinion',
+          title: 'Culture, Medicine & Editorial Commentary Magazine',
+          sectionCode: 'SECTION F',
+          articles: list.length > 0 ? list : otherArticles,
+        });
+        return;
+      }
+    },
+    [rankedArticles, leadArticle, secondaryArticles, wireBriefs, techArticles, worldArticles, businessArticles, scienceArticles, otherArticles]
+  );
+
+  const handlePrintSavedEdition = useCallback((edition: SavedEdition) => {
+    setSelectedPrintMagazine({
+      id: edition.id,
+      title: `${edition.title || 'DAYMARK'} (${edition.dateStr})`,
+      sectionCode: 'ARCHIVAL ISSUE',
+      articles: edition.articles,
+    });
+    setIsPrintModalOpen(true);
+  }, []);
+
+  const handleTriggerEditionPrint = useCallback(() => {
+    if (rankedArticles.length === 0) {
+      showToast('This edition contains no stories to export');
+      return;
+    }
+    if (selectedTopicFilter !== 'all') {
+      handleSelectMagazineToPrint(selectedTopicFilter);
+    } else {
+      setSelectedPrintMagazine(null);
+    }
+    setIsPrintModalOpen(true);
+  }, [rankedArticles.length, selectedTopicFilter, handleSelectMagazineToPrint]);
+
+  const availableMagazines = useMemo<MagazineOption[]>(() => {
+    const list: MagazineOption[] = [];
+    list.push({
+      id: 'all',
+      name: 'Full Morning Broadsheet',
+      count: rankedArticles.length,
+    });
+    const fpCount = [leadArticle, ...secondaryArticles, ...wireBriefs].filter(Boolean).length;
+    if (fpCount > 0) {
+      list.push({
+        id: 'frontpage',
+        name: 'Front Page & Morning Wire Magazine',
+        sectionCode: 'SECTION A',
+        count: fpCount,
+      });
+    }
+    const tCount = rankedArticles.filter((a) => a.category === 'technology').length;
+    if (tCount > 0) {
+      list.push({
+        id: 'technology',
+        name: 'Technology & AI Magazine',
+        sectionCode: 'SECTION B',
+        count: tCount,
+      });
+    }
+    const wCount = rankedArticles.filter((a) => a.category === 'world').length;
+    if (wCount > 0) {
+      list.push({
+        id: 'world',
+        name: 'World Affairs Magazine',
+        sectionCode: 'SECTION C',
+        count: wCount,
+      });
+    }
+    const bCount = rankedArticles.filter((a) => a.category === 'business').length;
+    if (bCount > 0) {
+      list.push({
+        id: 'business',
+        name: 'Markets & Capital Magazine',
+        sectionCode: 'SECTION D',
+        count: bCount,
+      });
+    }
+    const sCount = rankedArticles.filter((a) => a.category === 'science').length;
+    if (sCount > 0) {
+      list.push({
+        id: 'science',
+        name: 'Science & Cosmos Magazine',
+        sectionCode: 'SECTION E',
+        count: sCount,
+      });
+    }
+    const oCount = rankedArticles.filter((a) => !['technology', 'world', 'business', 'science'].includes(a.category)).length;
+    if (oCount > 0) {
+      list.push({
+        id: 'opinion',
+        name: 'Culture & Commentary Magazine',
+        sectionCode: 'SECTION F',
+        count: oCount,
+      });
+    }
+    return list;
+  }, [rankedArticles, leadArticle, secondaryArticles, wireBriefs]);
 
   // Feedback Handlers with Learning Signals & Real-Time Likes Counter
   const handleLike = (article: ScoredArticle) => {
@@ -920,8 +1093,9 @@ export default function DaymarkBroadsheetPage() {
   const executePrint = () => {
     if (typeof window === 'undefined') return;
     const originalTitle = document.title;
+    const titleToUse = selectedPrintMagazine ? selectedPrintMagazine.title : currentEditionMeta.editionName;
     // Set document title so browser's "Save as PDF" suggests a clean edition-specific filename
-    document.title = `DAYMARK - ${currentEditionMeta.editionName} - ${currentEditionMeta.date}`;
+    document.title = `DAYMARK - ${titleToUse} - ${currentEditionMeta.date}`;
     window.print();
     // Restore title after print dialog closes
     setTimeout(() => {
@@ -1122,27 +1296,61 @@ export default function DaymarkBroadsheetPage() {
                 <span className="text-xs font-sans text-[var(--text-muted)] hidden md:inline">
                   {rankedArticles.length} {rankedArticles.length === 1 ? 'story' : 'stories'}
                 </span>
-                {/* Contextual Edition Print / PDF Button */}
-                <button
-                  type="button"
-                  id="btn-print-edition"
-                  data-edition-id={currentEditionMeta.id}
-                  data-edition-name={currentEditionMeta.editionName}
-                  onClick={handleTriggerEditionPrint}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--border-strong)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] transition-all text-xs font-sans font-bold cursor-pointer shadow-xs group"
-                  title={`Print or Save PDF: ${currentEditionMeta.editionName}`}
-                >
-                  <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] group-hover:text-inherit shrink-0" />
-                  <span>Print / PDF</span>
-                </button>
+                {/* Contextual Edition & Magazine Print Controls */}
+                {selectedTopicFilter !== 'all' ? (
+                  <button
+                    type="button"
+                    id="btn-print-edition"
+                    data-edition-id={currentEditionMeta.id}
+                    data-edition-name={currentEditionMeta.editionName}
+                    onClick={handleTriggerEditionPrint}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--border-strong)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] transition-all text-xs font-sans font-bold cursor-pointer shadow-xs group"
+                    title={`Print or Save PDF: ${currentEditionMeta.editionName}`}
+                  >
+                    <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] group-hover:text-inherit shrink-0" />
+                    <span>Print {currentEditionMeta.editionName}</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      type="button"
+                      id="btn-print-edition"
+                      data-edition-id="all"
+                      data-edition-name="Full Broadsheet"
+                      onClick={() => {
+                        setSelectedPrintMagazine(null);
+                        setIsPrintModalOpen(true);
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--border-strong)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] transition-all text-xs font-sans font-bold cursor-pointer shadow-xs group"
+                      title="Print the complete multi-section broadsheet"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] group-hover:text-inherit shrink-0" />
+                      <span>Print Full Broadsheet</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="btn-print-magazines-picker"
+                      onClick={() => {
+                        handleSelectMagazineToPrint('technology');
+                        setIsPrintModalOpen(true);
+                      }}
+                      className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-xs font-sans font-medium cursor-pointer shadow-xs"
+                      title="Choose which individual magazine to export"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
+                      <span>Print Magazine...</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* =========================================================================
-                PRINT-ONLY BROADSHEET MASTHEAD
-                Rendered strictly during browser print / PDF export of this edition.
+                PRINT-ONLY BROADSHEET MASTHEAD (FULL BROADSHEET MODE)
+                Rendered strictly during browser print / PDF export when printing full edition.
                 ========================================================================= */}
-            <div className="print-only hidden print:block mb-8 pb-4 border-b-2 border-black font-serif">
+            <div className={`print-only hidden print:block mb-8 pb-4 border-b-2 border-black font-serif ${selectedPrintMagazine ? 'hidden print:hidden' : ''}`}>
               <div className="flex items-center justify-between border-b border-black pb-1.5 mb-3 text-[10pt] font-sans font-bold uppercase tracking-widest text-black">
                 <span>DAYMARK</span>
                 <span>{currentEditionMeta.date}</span>
@@ -1165,6 +1373,67 @@ export default function DaymarkBroadsheetPage() {
                 <span>Format: Broadsheet Archival PDF</span>
               </div>
             </div>
+
+            {/* =========================================================================
+                PRINT-ONLY DEDICATED MAGAZINE EDITION
+                Rendered strictly during browser print when the user prints an individual magazine.
+                ========================================================================= */}
+            {selectedPrintMagazine && (
+              <div className="print-only hidden print:block mb-8 font-serif">
+                <div className="flex items-center justify-between border-b-2 border-black pb-2 mb-3 text-[10pt] font-sans font-bold uppercase tracking-widest text-black">
+                  <span>DAYMARK MAGAZINE</span>
+                  <span>{currentEditionMeta.date}</span>
+                  <span>{selectedPrintMagazine.sectionCode || 'SPECIAL EDITION'}</span>
+                </div>
+
+                <div className="text-center py-4 border-b-2 border-black mb-6">
+                  <div className="text-xs font-mono uppercase tracking-[0.3em] text-black mb-1">
+                    DAYMARK CURATED MAGAZINE SERIES
+                  </div>
+                  <h1 className="font-headline text-4xl sm:text-5xl font-black uppercase tracking-tight text-black leading-tight">
+                    {selectedPrintMagazine.title}
+                  </h1>
+                  <div className="text-sm italic font-serif text-black mt-2">
+                    Curated Intelligence • {selectedPrintMagazine.articles.length} Stories Included • Archival Broadsheet
+                  </div>
+                  <div className="flex items-center justify-between text-[8pt] font-mono uppercase tracking-wider text-black mt-3 pt-2 border-t border-black/30">
+                    <span>Subscriber: {preferences.readerName || 'Personal Reader'}</span>
+                    <span>Format: Offline Paper Edition</span>
+                    <span>Generated: {currentEditionMeta.date}</span>
+                  </div>
+                </div>
+
+                {/* Articles Grid for the Printed Magazine */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {selectedPrintMagazine.articles.map((article) => (
+                    <article key={article.id} className="border-b border-black/40 pb-6 mb-6 print-break-inside-avoid">
+                      {article.imageUrl && (
+                        <div className="mb-3 w-full h-48 overflow-hidden border border-black/20">
+                          <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-[8pt] font-mono uppercase text-black mb-1">
+                        <span className="font-bold">{article.source.name}</span>
+                        <span>{article.readTimeMinutes} MIN READ</span>
+                      </div>
+                      <h2 className="font-headline text-xl sm:text-2xl font-bold text-black leading-tight mb-2">
+                        {article.title}
+                      </h2>
+                      <p className="font-serif text-[10.5pt] leading-relaxed text-black mb-3">
+                        {article.description}
+                      </p>
+                      <div className="text-[8pt] font-mono text-black/80 flex items-center justify-between border-t border-black/20 pt-1">
+                        <span>Verified RSS Wire • Daymark Editorial Desk</span>
+                        <span>Priority Score: {'relevanceScore' in article && typeof article.relevanceScore === 'number' ? Math.round(article.relevanceScore) : 88}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* BROADSHEET BODY (HIDDEN WHEN PRINTING A DEDICATED INDIVIDUAL MAGAZINE) */}
+            <div className={selectedPrintMagazine ? 'print:hidden' : ''}>
             {/* 1. TODAY'S 3 KEY TAKEAWAYS — THE MORNING BRIEFING BOX */}
             {keyTakeaways.length > 0 && selectedTopicFilter === 'all' && (
               <section className="mb-8 p-5 sm:p-6 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded shadow-2xs print-break-inside-avoid">
@@ -1336,6 +1605,46 @@ export default function DaymarkBroadsheetPage() {
               </section>
             )}
 
+            {/* SECTION A: FRONT PAGE & MORNING WIRE MAGAZINE */}
+            <div className="flex items-center justify-between gap-3 mb-5 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center space-x-3 min-w-0">
+                <span className="font-sans font-bold text-[10px] uppercase tracking-[0.25em] text-[var(--accent-primary)] bg-[var(--accent-subtle)] px-2.5 py-1 rounded border border-[var(--accent-border)] shrink-0">
+                  SECTION A
+                </span>
+                <h3 className={`${headlineFontClass} text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-primary)] truncate`}>
+                  {selectedTopicFilter === 'all'
+                    ? 'Front Page & Morning Wire Magazine'
+                    : `${currentEditionMeta.editionName} Magazine`}
+                </h3>
+              </div>
+
+              <div className="flex-1 h-px bg-[var(--border-subtle)] hidden sm:block mx-2" />
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedTopicFilter === 'all') {
+                    handlePrintMagazine(
+                      'Front Page & Morning Wire Magazine',
+                      'SECTION A',
+                      [leadArticle, ...secondaryArticles, ...wireBriefs].filter(Boolean) as ScoredArticle[]
+                    );
+                  } else {
+                    handlePrintMagazine(
+                      `${currentEditionMeta.editionName} Magazine`,
+                      `DESK: ${selectedTopicFilter.toUpperCase()}`,
+                      rankedArticles
+                    );
+                  }
+                }}
+                className="no-print inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-sans font-semibold text-[var(--text-primary)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] border border-[var(--border-strong)] rounded-md shadow-2xs transition-all cursor-pointer shrink-0 group"
+                title={`Print or Save PDF: ${selectedTopicFilter === 'all' ? 'Front Page & Morning Wire Magazine' : currentEditionMeta.editionName}`}
+              >
+                <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] group-hover:text-inherit transition-colors shrink-0" />
+                <span>Print Magazine</span>
+              </button>
+            </div>
+
             {/* FRONT PAGE BROADSHEET LAYOUT */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b border-[var(--border-subtle)]">
               {/* PRIMARY BROADSHEET COLUMN (Cols 1-8) */}
@@ -1499,6 +1808,8 @@ export default function DaymarkBroadsheetPage() {
                   title="Technology, Computation & Artificial Intelligence"
                   sectionCode="SECTION B"
                   articles={techArticles.slice(0, 3)}
+                  allArticles={techArticles}
+                  onPrint={handlePrintMagazine}
                   onLike={handleLike}
                   onDislike={handleDislike}
                   onSkip={handleSkip}
@@ -1515,6 +1826,8 @@ export default function DaymarkBroadsheetPage() {
                   title="Global Geopolitics & World Affairs"
                   sectionCode="SECTION C"
                   articles={worldArticles.slice(0, 3)}
+                  allArticles={worldArticles}
+                  onPrint={handlePrintMagazine}
                   onLike={handleLike}
                   onDislike={handleDislike}
                   onSkip={handleSkip}
@@ -1531,6 +1844,8 @@ export default function DaymarkBroadsheetPage() {
                   title="Markets, Capital & Global Commerce"
                   sectionCode="SECTION D"
                   articles={businessArticles.slice(0, 3)}
+                  allArticles={businessArticles}
+                  onPrint={handlePrintMagazine}
                   onLike={handleLike}
                   onDislike={handleDislike}
                   onSkip={handleSkip}
@@ -1547,6 +1862,8 @@ export default function DaymarkBroadsheetPage() {
                   title="Science, Cosmos & Earth Systems"
                   sectionCode="SECTION E"
                   articles={scienceArticles.slice(0, 3)}
+                  allArticles={scienceArticles}
+                  onPrint={handlePrintMagazine}
                   onLike={handleLike}
                   onDislike={handleDislike}
                   onSkip={handleSkip}
@@ -1564,6 +1881,8 @@ export default function DaymarkBroadsheetPage() {
                     title="Culture, Medicine & Editorial Commentary"
                     sectionCode="SECTION F"
                     articles={otherArticles.slice(0, 3)}
+                    allArticles={otherArticles}
+                    onPrint={handlePrintMagazine}
                     onLike={handleLike}
                     onDislike={handleDislike}
                     onSkip={handleSkip}
@@ -1577,25 +1896,80 @@ export default function DaymarkBroadsheetPage() {
                 )}
               </div>
             )}
+            </div>
 
-            {/* Edition Bottom Bar with Contextual Print / PDF Button */}
-            <div className="no-print mt-12 pt-6 pb-2 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-sans text-[var(--text-secondary)]">
+            {/* Edition Bottom Bar with Contextual Print Any Magazine Controls */}
+            <div className="no-print mt-12 pt-6 pb-2 border-t border-[var(--border-subtle)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-sans text-[var(--text-secondary)]">
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-[var(--text-primary)]">{currentEditionMeta.editionName}</span>
-                <span>•</span>
-                <span>End of Edition ({rankedArticles.length} stories)</span>
+                <Printer className="w-4 h-4 text-[var(--accent-primary)] shrink-0" />
+                <span className="font-semibold text-[var(--text-primary)]">Print Any Magazine:</span>
+                <span className="text-[var(--text-muted)] hidden sm:inline">• Export ink-saving paper broadsheets</span>
               </div>
-              <button
-                type="button"
-                id="btn-print-edition-bottom"
-                data-edition-id={currentEditionMeta.id}
-                onClick={handleTriggerEditionPrint}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-xs font-sans font-medium cursor-pointer shadow-xs"
-                title={`Print or Save PDF: ${currentEditionMeta.editionName}`}
-              >
-                <Printer className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
-                <span>Print / PDF — {currentEditionMeta.editionName}</span>
-              </button>
+
+              <div className="flex flex-wrap items-center gap-1.5 justify-center sm:justify-end">
+                <button
+                  type="button"
+                  id="btn-print-edition-bottom"
+                  onClick={() => {
+                    setSelectedPrintMagazine(null);
+                    setIsPrintModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                  title="Print complete multi-section broadsheet"
+                >
+                  Full Broadsheet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectMagazineToPrint('frontpage')}
+                  className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                  title="Print Section A: Front Page & Morning Wire Magazine"
+                >
+                  Section A: Front Page
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectMagazineToPrint('technology')}
+                  className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                  title="Print Section B: Technology & AI Magazine"
+                >
+                  Section B: Technology
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectMagazineToPrint('world')}
+                  className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                  title="Print Section C: World Affairs Magazine"
+                >
+                  Section C: World
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectMagazineToPrint('business')}
+                  className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                  title="Print Section D: Markets & Capital Magazine"
+                >
+                  Section D: Markets
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectMagazineToPrint('science')}
+                  className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                  title="Print Section E: Science & Cosmos Magazine"
+                >
+                  Section E: Science
+                </button>
+                {otherArticles.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectMagazineToPrint('opinion')}
+                    className="px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-page)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors cursor-pointer font-medium text-[11px]"
+                    title="Print Section F: Culture & Arts Magazine"
+                  >
+                    Section F: Culture
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1694,17 +2068,24 @@ export default function DaymarkBroadsheetPage() {
         onSaveCurrent={handleSaveTodayEdition}
         activeEditionId={activeEdition?.id}
         onResetToLive={handleResetToLive}
+        onPrintEdition={handlePrintSavedEdition}
       />
 
       {/* Print / Save PDF Modal */}
       <PrintPreviewModal
         isOpen={isPrintModalOpen}
-        onClose={() => setIsPrintModalOpen(false)}
+        onClose={() => {
+          setIsPrintModalOpen(false);
+          setSelectedPrintMagazine(null);
+        }}
         onConfirmPrint={executePrint}
         newspaperTitle={preferences.newspaperTitle || 'DAYMARK'}
-        editionName={currentEditionMeta.editionName}
+        editionName={selectedPrintMagazine ? selectedPrintMagazine.title : currentEditionMeta.editionName}
         editionDate={currentEditionMeta.date}
-        articleCount={rankedArticles.length}
+        articleCount={selectedPrintMagazine ? selectedPrintMagazine.articles.length : rankedArticles.length}
+        availableMagazines={availableMagazines}
+        onSelectMagazine={handleSelectMagazineToPrint}
+        activeMagazineId={selectedPrintMagazine ? selectedPrintMagazine.id : 'all'}
       />
 
       {/* Gemini AI Key Configuration Modal */}

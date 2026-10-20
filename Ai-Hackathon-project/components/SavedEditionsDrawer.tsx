@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Calendar, Newspaper, Trash2, ArrowRight, BookOpen } from 'lucide-react';
+import { X, Calendar, Newspaper, Trash2, ArrowRight, BookOpen, Printer } from 'lucide-react';
 import { SavedEdition } from '@/types/news';
 
 interface SavedEditionsDrawerProps {
@@ -13,6 +13,7 @@ interface SavedEditionsDrawerProps {
   onSaveCurrent: () => void;
   activeEditionId?: string | null;
   onResetToLive: () => void;
+  onPrintEdition?: (edition: SavedEdition) => void;
 }
 
 export default function SavedEditionsDrawer({
@@ -24,6 +25,7 @@ export default function SavedEditionsDrawer({
   onSaveCurrent,
   activeEditionId,
   onResetToLive,
+  onPrintEdition,
 }: SavedEditionsDrawerProps) {
   if (!isOpen) return null;
 
@@ -120,16 +122,30 @@ export default function SavedEditionsDrawer({
                   </h4>
 
                   <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)] text-xs font-sans mt-2">
-                    <button
-                      onClick={() => {
-                        onSelectEdition(ed);
-                        onClose();
-                      }}
-                      className="inline-flex items-center space-x-1 text-[var(--accent-primary)] font-semibold hover:underline cursor-pointer"
-                    >
-                      <span>{isSelected ? 'Currently Viewing' : 'Read Edition'}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          onSelectEdition(ed);
+                          onClose();
+                        }}
+                        className="inline-flex items-center space-x-1 text-[var(--accent-primary)] font-semibold hover:underline cursor-pointer"
+                      >
+                        <span>{isSelected ? 'Currently Viewing' : 'Read Edition'}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+
+                      {onPrintEdition && (
+                        <button
+                          type="button"
+                          onClick={() => onPrintEdition(ed)}
+                          className="inline-flex items-center space-x-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] transition-colors cursor-pointer text-[11px]"
+                          title={`Print or Save PDF: ${ed.title || ed.leadHeadline}`}
+                        >
+                          <Printer className="w-3 h-3 text-[var(--accent-primary)]" />
+                          <span>Print</span>
+                        </button>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => onDeleteEdition(ed.id)}

@@ -264,3 +264,28 @@ M. Professional Editorial Lens Links & Hashtag Removal:
    - Populated previously empty spaces with professional utility actions: "Clear Lens Filter",
      "Ask AI" quick link, and "Adjust Lenses".
    - Verified via automated browser testing with 100% type safety and responsive layout.
+
+N. Contextual Per-Magazine Print Buttons & Selective Broadsheet Export:
+   - Dedicated Print Button on Every Magazine Section:
+     * Replaced the single front-page button pattern with dedicated contextual print buttons attached
+       directly to every magazine across the website.
+     * Added Section A Header Rule ("Front Page & Morning Wire Magazine") with direct "Print Magazine" action.
+     * Enhanced components/SectionBlock.tsx with header print actions for Section B (Technology,
+       Computation & AI), Section C (Global Geopolitics & World Affairs), Section D (Markets, Capital
+       & Commerce), Section E (Science & Cosmos), and Section F (Culture & Commentary).
+     * Integrated per-issue print actions into components/SavedEditionsDrawer.tsx allowing readers
+       to export any archived edition directly.
+   - Top Edition Bar & Magazine Quick Selector:
+     * Replaced the ambiguous single print button on the front of the website with distinct
+       "Print Full Broadsheet" and "Print Magazine..." buttons side by side.
+     * When filtered to any specific desk, dynamically displays "Print [Desk] Magazine".
+   - Interactive Magazine Export Modal (components/PrintPreviewBanner.tsx):
+     * Displays the active magazine target, story count, and ink-saving PDF instructions.
+     * Features an interactive quick selector allowing the reader to switch between any of their
+       favourite magazines on the fly before exporting.
+   - Selective Print Broadsheet Isolation:
+     * When an individual magazine is printed, automatically isolates that specific magazine
+       in @media print, rendering a dedicated magazine masthead and its curated articles while
+       suppressing unrelated sections.
+     * When full broadsheet is selected, exports the complete multi-section edition.
+   - Verified via browser subagent with interactive testing, screenshot capture, and recording.
