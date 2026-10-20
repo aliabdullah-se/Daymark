@@ -253,3 +253,14 @@ L. High-Definition Editorial Images, Gemini Broadsheet Synthesis, News Chatbot &
      * Updated `components/StickyAudioPlayer.tsx` to support seamless Play/Pause/Resume without unmounting,
        playback speed toggle (1x, 1.25x, 1.5x), live soundwave equalizer, and Chromium heartbeat workaround.
      * Verified all features via automated browser subagent screenshots with 0 TypeScript/build errors.
+
+M. Professional Editorial Lens Links & Hashtag Removal:
+   - Completely eradicated informal '#' social hashtags from the entire application (Masthead.tsx,
+     SettingsModal.tsx, profile/page.tsx, onboarding/page.tsx).
+   - Replaced static labels with interactive, clickable editorial lens filter buttons:
+     * Core desks (Technology, World Affairs, Markets, Science) toggle broadsheet desk views.
+     * Custom intellectual lenses (Artificial Intelligence, Space Exploration, Clean Energy)
+       immediately execute targeted keyword searches across today's edition with active pill styling.
+   - Populated previously empty spaces with professional utility actions: "Clear Lens Filter",
+     "Ask AI" quick link, and "Adjust Lenses".
+   - Verified via automated browser testing with 100% type safety and responsive layout.

@@ -999,6 +999,13 @@ export default function DaymarkBroadsheetPage() {
           }}
           hasGeminiKey={hasGeminiKey}
           onOpenSettings={openSettings}
+          onSelectKeyword={(keyword) => {
+            setSearchQuery(keyword);
+            if (keyword) {
+              showToast(`Filtering broadsheet stories by "${keyword}"`);
+            }
+          }}
+          activeKeyword={searchQuery}
           onToggleSidebar={() => setIsSidebarOpen(true)}
           showBookmarksOnly={showBookmarksOnly}
           onToggleBookmarks={() => setShowBookmarksOnly((prev) => !prev)}

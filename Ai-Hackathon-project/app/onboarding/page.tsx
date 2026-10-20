@@ -262,7 +262,7 @@ export default function OnboardingPage() {
                         key={interest}
                         className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-forest-100/70 text-forest-900 text-xs font-serif border border-forest-200"
                       >
-                        <span>#{interest}</span>
+                        <span>{interest.replace(/^#+/, '')}</span>
                         <button
                           type="button"
                           onClick={() => removeCustomInterest(interest)}

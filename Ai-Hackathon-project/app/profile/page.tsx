@@ -442,9 +442,9 @@ export default function ProfileLearningPage() {
                   preferences.customInterests.map((interest) => (
                     <span
                       key={interest}
-                      className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-serif italic"
+                      className="inline-flex items-center px-2.5 py-1 rounded-full bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-medium"
                     >
-                      #{interest}
+                      {interest.replace(/^#+/, '')}
                     </span>
                   ))
                 )}

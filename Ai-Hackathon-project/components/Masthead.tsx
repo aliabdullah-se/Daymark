@@ -60,6 +60,8 @@ export interface MastheadProps {
   onToggleBookmarks?: () => void;
   savedArticlesCount?: number;
   onScrollToDiscover?: () => void;
+  onSelectKeyword?: (keyword: string) => void;
+  activeKeyword?: string;
 }
 
 export default function Masthead({
@@ -87,6 +89,8 @@ export default function Masthead({
   onToggleBookmarks,
   savedArticlesCount = 0,
   onScrollToDiscover,
+  onSelectKeyword,
+  activeKeyword = '',
 }: MastheadProps) {
   const { settings, resolvedTheme, toggleTheme, openSettings } = useSettings();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -651,49 +655,94 @@ export default function Masthead({
 
       {/* =========================================================================
           ACTIVE CURATED LENSES STRIP
-          Subtle editorial telemetry showing the active intellectual lenses
+          Interactive editorial telemetry linking directly to lenses and topics
           ========================================================================= */}
       {preferences.selectedTopics.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between text-xs font-sans text-[var(--text-secondary)] border-b border-[var(--border-subtle)]/70 no-print gap-2">
           <div className="flex items-center flex-wrap gap-1.5 sm:gap-2">
             <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center shrink-0">
-              <Sparkles className="w-3 h-3 text-[var(--accent-primary)] mr-1 shrink-0" />
+              <Compass className="w-3.5 h-3.5 text-[var(--accent-primary)] mr-1 shrink-0" />
               Curated Lenses:
             </span>
+
+            {/* Core Desk Lenses as Interactive Links */}
             {preferences.selectedTopics.map((topicId) => {
               const meta = AVAILABLE_TOPICS.find((t) => t.id === topicId);
+              const label = meta ? meta.label.split('&')[0].trim() : topicId;
+              const isSelected = selectedTopicFilter === topicId;
               return (
-                <span
+                <button
                   key={topicId}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full bg-[var(--accent-subtle)] text-[var(--accent-text)] text-[11px] font-medium border border-[var(--accent-border)] select-none"
+                  type="button"
+                  onClick={() => onSelectTopicFilter(isSelected ? 'all' : topicId)}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all cursor-pointer border ${
+                    isSelected
+                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] font-semibold shadow-xs ring-1 ring-[var(--accent-primary)]'
+                      : 'bg-[var(--accent-subtle)] hover:bg-[var(--accent-subtle)]/80 text-[var(--accent-text)] border-[var(--accent-border)]'
+                  }`}
+                  title={isSelected ? 'Clear desk filter' : `Filter broadsheet to ${label} stories`}
                 >
-                  {meta ? meta.label.split('&')[0].trim() : topicId}
-                </span>
+                  <span>{label}</span>
+                </button>
               );
             })}
-            {preferences.customInterests.slice(0, 3).map((interest) => (
-              <span
-                key={interest}
-                className="inline-flex items-center px-2 py-0.5 rounded-full bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] text-[11px] font-serif italic border border-[var(--border-subtle)] select-none"
-              >
-                #{interest}
-              </span>
-            ))}
-            {preferences.customInterests.length > 3 && (
-              <span className="text-[10px] text-[var(--text-muted)] font-sans">
-                +{preferences.customInterests.length - 3} more
-              </span>
-            )}
+
+            {/* Custom Intellectual Lenses without Hashtags as Search/Focus Links */}
+            {preferences.customInterests.map((interest) => {
+              const cleanInterest = interest.replace(/^#+/, '').trim();
+              const isKeywordActive = activeKeyword?.toLowerCase() === cleanInterest.toLowerCase();
+              return (
+                <button
+                  key={interest}
+                  type="button"
+                  onClick={() => onSelectKeyword && onSelectKeyword(isKeywordActive ? '' : cleanInterest)}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all cursor-pointer border ${
+                    isKeywordActive
+                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] font-semibold shadow-xs ring-1 ring-[var(--accent-primary)]'
+                      : 'bg-[var(--bg-surface-elevated)] hover:bg-[var(--bg-surface-subtle)] text-[var(--text-primary)] border-[var(--border-subtle)] hover:border-[var(--accent-primary)]'
+                  }`}
+                  title={isKeywordActive ? `Clear filter for "${cleanInterest}"` : `Filter broadsheet stories by "${cleanInterest}"`}
+                >
+                  <span>{cleanInterest}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenSettings}
-            className="text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] font-sans font-medium transition-colors hidden sm:inline-flex items-center space-x-0.5 cursor-pointer"
-          >
-            <span>Adjust Lenses</span>
-            <ArrowUpRight className="w-3 h-3" />
-          </button>
+          {/* Quick Utility Links on Right */}
+          <div className="flex items-center space-x-3 shrink-0">
+            {activeKeyword && (
+              <button
+                type="button"
+                onClick={() => onSelectKeyword && onSelectKeyword('')}
+                className="text-[11px] text-[var(--accent-primary)] hover:underline font-medium cursor-pointer"
+              >
+                Clear Lens Filter (&times;)
+              </button>
+            )}
+
+            {onOpenChatbot && (
+              <button
+                type="button"
+                onClick={onOpenChatbot}
+                className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] font-sans font-medium transition-colors hidden md:inline-flex items-center space-x-1 cursor-pointer"
+                title="Ask Gemini AI questions about these lenses"
+              >
+                <Sparkles className="w-3 h-3 text-[var(--accent-primary)]" />
+                <span>Ask AI</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleOpenSettings}
+              className="text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] font-sans font-medium transition-colors inline-flex items-center space-x-0.5 cursor-pointer"
+              title="Customize your intellectual lenses in settings"
+            >
+              <span>Adjust Lenses</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       )}
     </header>

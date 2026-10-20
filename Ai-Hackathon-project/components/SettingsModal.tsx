@@ -795,7 +795,7 @@ export default function SettingsModal({
                       key={kw}
                       className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-serif italic bg-[var(--accent-subtle)] text-[var(--accent-text)] border border-[var(--accent-border)]"
                     >
-                      <span>#{kw}</span>
+                      <span>{kw.replace(/^#+/, '')}</span>
                       <button
                         type="button"
                         onClick={() => removeKeyword(kw)}
