@@ -224,8 +224,20 @@ export async function asyncDbGenerateOtp(email: string): Promise<{ code: string;
     console.warn('MongoDB generate OTP failed, writing to local fallback:', err);
   }
 
-  // Also sync local
-  const localRes = dbGenerateOtp(email);
+  // Also sync local with identical code and expiry
+  const db = readDb();
+  db.otps[clean] = {
+    code,
+    expiresAt,
+    verified: false,
+  };
+  const user = db.users.find((u) => u.email.toLowerCase() === clean);
+  if (user) {
+    user.otpCode = code;
+    user.otpExpiresAt = expiresAt;
+  }
+  writeDb(db);
+
   return { code, expiresAt };
 }
 
@@ -250,6 +262,10 @@ export async function asyncDbVerifyOtp(
       const entry = await OtpModel.findOne({ email: clean }).sort({ createdAt: -1 });
 
       if (entry) {
+        if (entry.verified) {
+          return { success: false, message: 'Verification code has already been used. Please request a fresh one.' };
+        }
+
         if (new Date(entry.expiresAt).getTime() < Date.now()) {
           return { success: false, message: 'Verification code has expired. Please request a fresh one.' };
         }
@@ -450,6 +466,10 @@ export function dbVerifyOtp(email: string, code: string): { success: boolean; me
       return { success: true, message: 'Judge credentials verified', user: DEMO_JUDGE_USER };
     }
     return { success: false, message: 'No OTP requested for this subscriber email. Please request a new code.' };
+  }
+
+  if (entry.verified) {
+    return { success: false, message: 'Verification code has already been used. Please request a fresh one.' };
   }
 
   if (new Date(entry.expiresAt).getTime() < Date.now()) {

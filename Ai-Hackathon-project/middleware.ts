@@ -23,6 +23,7 @@ export function middleware(request: NextRequest) {
   // Routes requiring verified subscriber identity or judge credentials
   const isProtectedRoute =
     pathname === '/' ||
+    pathname.startsWith('/dashboard') ||
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/profile') ||
     pathname.startsWith('/archive');

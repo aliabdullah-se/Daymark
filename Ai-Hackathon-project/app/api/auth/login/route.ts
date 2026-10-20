@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify password if one was set during registration
-    if (user.password && password && user.password !== password) {
+    if (user.password && user.password !== password) {
       return NextResponse.json(
         { success: false, message: 'Invalid subscriber password. Please verify and retry.' },
         { status: 401 }

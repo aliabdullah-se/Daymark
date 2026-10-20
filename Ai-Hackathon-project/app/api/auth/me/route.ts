@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbFindUserByEmail } from '@/lib/db';
+import { asyncDbFindUserByEmail } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
     try {
       const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
-      const user = dbFindUserByEmail(decoded.email);
+      const user = await asyncDbFindUserByEmail(decoded.email);
 
       return NextResponse.json({
         authenticated: true,
