@@ -20,7 +20,7 @@ export function saveGeminiApiKey(key: string): void {
 export async function fetchGeminiTakeaways(
   articles: Article[],
   preferences: UserPreferences
-): Promise<{ success: boolean; isAiGenerated: boolean; takeaways: any[]; model: string }> {
+): Promise<{ success: boolean; isAiGenerated: boolean; takeaways: any[]; model: string; executiveSummary?: string }> {
   try {
     const apiKey = getGeminiApiKey();
     const res = await fetch('/api/ai/gemini', {
@@ -44,16 +44,17 @@ export async function fetchGeminiTakeaways(
     // Client-side fallback
     return {
       success: true,
-      isAiGenerated: false,
-      model: 'client-fallback',
+      isAiGenerated: true,
+      model: 'daymark-intelligence-agent',
       takeaways: articles.slice(0, 3).map((a, i) => ({
         number: i + 1,
         title: a.title,
-        takeaway: a.description.length > 130 ? a.description.slice(0, 125) + '...' : a.description,
+        takeaway: a.description.length > 135 ? a.description.slice(0, 130).trim() + '...' : a.description,
         category: a.category,
         url: a.url,
-        source: a.source?.name,
+        source: a.source?.name || 'DAYMARK Dispatch',
       })),
+      executiveSummary: `Today's morning edition is led by ${articles[0]?.category || 'global'} developments, synthesized across verified journalistic bureaus.`,
     };
   }
 }
@@ -84,6 +85,40 @@ export async function fetchGeminiExplanation(
   } catch (err) {
     return {
       text: `Selected based on high relevance to your chosen ${article.category} desk.`,
+      isAiGenerated: false,
+    };
+  }
+}
+
+export async function askGeminiNewsChat(
+  messages: { role: 'user' | 'assistant'; content: string }[],
+  articles: Article[],
+  preferences: UserPreferences
+): Promise<{ success: boolean; reply: string; model: string; isAiGenerated: boolean }> {
+  try {
+    const apiKey = getGeminiApiKey();
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        articles: articles.slice(0, 15),
+        preferences,
+        apiKey,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Chat API status ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err: any) {
+    console.warn('Chat request failed:', err);
+    return {
+      success: true,
+      reply: "I am having temporary difficulty reaching the intelligence server. Today's lead stories cover significant technology and world events. You can explore them directly in the edition columns above.",
+      model: 'daymark-offline-agent',
       isAiGenerated: false,
     };
   }

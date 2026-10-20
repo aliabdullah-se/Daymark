@@ -86,16 +86,18 @@ export default function ArticleCard({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Hero Image (Respects settings.showImages) */}
           {settings.showImages && article.imageUrl ? (
-            <div className="lg:col-span-6 w-full overflow-hidden rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] shadow-xs">
-              <img
-                src={article.imageUrl}
-                alt={article.title}
-                className="w-full h-[280px] sm:h-[360px] lg:h-[420px] object-cover hover:scale-[1.01] transition-transform duration-500"
-                loading="eager"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+            <div className="lg:col-span-6 w-full overflow-hidden rounded-md bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] shadow-xs">
+              <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[4/3] xl:aspect-[16/10] overflow-hidden flex items-center justify-center bg-[var(--bg-surface-subtle)]">
+                <img
+                  src={article.imageUrl}
+                  alt={article.title}
+                  className="w-full h-full object-cover object-[center_25%] hover:scale-[1.02] transition-transform duration-500 ease-out"
+                  loading="eager"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              </div>
               <div className="py-1.5 px-3 text-[10px] text-[var(--text-muted)] font-sans italic bg-[var(--bg-surface-subtle)] border-t border-[var(--border-subtle)] flex justify-between">
                 <span>Via {article.source.name}</span>
                 <span>{formattedDate}</span>
@@ -319,14 +321,14 @@ export default function ArticleCard({
         {settings.showImages && article.imageUrl && (
           <div
             onClick={() => onRead && onRead(article)}
-            className={`mb-3 overflow-hidden rounded bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] ${
+            className={`mb-3 overflow-hidden rounded-md bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] relative aspect-[16/10] sm:aspect-[16/9] flex items-center justify-center ${
               onRead ? 'cursor-pointer' : ''
             }`}
           >
             <img
               src={article.imageUrl}
               alt={article.title}
-              className="w-full h-40 object-cover group-hover:scale-[1.02] transition-transform duration-300"
+              className="w-full h-full object-cover object-[center_25%] group-hover:scale-[1.03] transition-transform duration-500 ease-out"
               loading="lazy"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = 'none';

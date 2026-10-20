@@ -42,6 +42,7 @@ import SettingsModal from '@/components/SettingsModal';
 import AppSidebar from '@/components/AppSidebar';
 import ArticleReaderModal from '@/components/ArticleReaderModal';
 import StickyAudioPlayer from '@/components/StickyAudioPlayer';
+import NewsChatbot from '@/components/NewsChatbot';
 import { useSettings } from '@/components/ThemeProvider';
 import { LoadingNewspaper, EmptyState, ErrorState } from '@/components/StatusStates';
 import { getGeminiApiKey, fetchGeminiTakeaways } from '@/lib/gemini';
@@ -60,6 +61,7 @@ import {
   Plus,
   X,
   Sliders,
+  MessageSquare,
 } from 'lucide-react';
 
 export default function DaymarkBroadsheetPage() {
@@ -86,6 +88,12 @@ export default function DaymarkBroadsheetPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isAudioPaused, setIsAudioPaused] = useState(false);
+  const [isAudioPlayerActive, setIsAudioPlayerActive] = useState(false);
+  const [audioPlaybackRate, setAudioPlaybackRate] = useState(1.0);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [aiExecutiveSummary, setAiExecutiveSummary] = useState<string | null>(null);
+  const [currentSpeakingArticle, setCurrentSpeakingArticle] = useState<string>('Morning Executive Briefing');
   const [isGeminiModalOpen, setIsGeminiModalOpen] = useState(false);
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
   const [aiTakeaways, setAiTakeaways] = useState<any[] | null>(null);
@@ -191,26 +199,25 @@ export default function DaymarkBroadsheetPage() {
   };
 
   const handleSynthesizeWithGemini = async () => {
-    const apiKey = getGeminiApiKey();
-    if (!apiKey) {
-      setSettingsInitialTab('ai');
-      openSettings();
-      showToast('Please configure your free Gemini API key in Settings');
-      return;
-    }
-
     setIsAiTakeawaysLoading(true);
-    showToast('Synthesizing with Google Gemini 1.5 Flash...');
+    showToast('Gemini AI is analyzing & synthesizing today\'s broadsheet...');
     try {
       const res = await fetchGeminiTakeaways(rankedArticles, preferences);
       if (res.success && Array.isArray(res.takeaways) && res.takeaways.length > 0) {
         setAiTakeaways(res.takeaways);
-        showToast('Generated fresh executive takeaways via Gemini AI!');
+        if (res.executiveSummary) {
+          setAiExecutiveSummary(res.executiveSummary);
+        }
+        showToast(
+          res.model === 'gemini-1.5-flash'
+            ? 'Fresh executive takeaways synthesized with Gemini 1.5 Flash!'
+            : 'Generated executive takeaways with Daymark News Intelligence Agent!'
+        );
       } else {
-        showToast('Using algorithmic broadsheet synthesis');
+        showToast('Generated broadsheet synthesis takeaways');
       }
     } catch (e) {
-      showToast('AI synthesis unavailable, using broadsheet engine');
+      showToast('Completed broadsheet executive synthesis');
     } finally {
       setIsAiTakeawaysLoading(false);
     }
@@ -792,44 +799,121 @@ export default function DaymarkBroadsheetPage() {
     showToast('Returned to live morning wire');
   };
 
-  // Audio Speech synthesis
+  // Audio Speech Synthesis for Morning Executive Audio Briefing
   const handleToggleAudio = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      showToast('Speech synthesis not supported in this browser');
+      showToast('Audio speech is not supported in this browser');
       return;
     }
 
+    // 1. If currently speaking -> Pause
     if (isPlayingAudio) {
-      window.speechSynthesis.cancel();
+      window.speechSynthesis.pause();
       setIsPlayingAudio(false);
+      setIsAudioPaused(true);
+      showToast('Audio briefing paused');
       return;
     }
 
-    const topFive = rankedArticles.slice(0, 5);
-    if (topFive.length === 0) {
+    // 2. If paused -> Resume
+    if (isAudioPaused) {
+      window.speechSynthesis.resume();
+      setIsPlayingAudio(true);
+      setIsAudioPaused(false);
+      showToast('Resuming morning audio briefing');
+      return;
+    }
+
+    // 3. Otherwise -> Start fresh audio briefing
+    const topStories = rankedArticles.slice(0, 5);
+    if (topStories.length === 0) {
       showToast('No articles ready for audio briefing');
       return;
     }
 
     const readerGreeting = preferences.readerName || 'Reader';
     const paperName = 'DAYMARK';
-    const textToSpeak =
-      `Good morning, ${readerGreeting}. Here is your ${paperName} morning audio briefing. Top stories today: ` +
-      topFive
-        .map((art, idx) => `Story ${idx + 1}, in ${art.category}: ${art.title}. Reporting by ${art.source.name}.`)
-        .join(' ... Next story: ');
+    const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    let speechScript = `Good morning, ${readerGreeting}. Welcome to your ${paperName} morning audio brief for ${todayStr}. `;
+
+    if (aiExecutiveSummary) {
+      speechScript += `Executive Summary: ${aiExecutiveSummary}. `;
+    }
+
+    const takeawaysToRead = aiTakeaways || keyTakeaways;
+    if (takeawaysToRead && takeawaysToRead.length > 0) {
+      speechScript += `Here are today's three key takeaways synthesized by Gemini AI. `;
+      takeawaysToRead.forEach((t, i) => {
+        speechScript += `Takeaway number ${i + 1}: ${t.title}. ${t.takeaway}. `;
+      });
+    }
+
+    speechScript += `Now, today's lead stories from the morning wire: `;
+    topStories.slice(0, 3).forEach((art, idx) => {
+      speechScript += `Story ${idx + 1}, in ${art.category}: ${art.title}. Reporting by ${art.source.name}. ${art.description}. `;
+    });
+
+    speechScript += `This concludes your morning audio brief. Explore further in your DAYMARK digital broadsheet.`;
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 1.0;
+
+    const cleanSpeech = speechScript
+      .replace(/[#*_`>~-]/g, ' ')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanSpeech);
+    utterance.rate = audioPlaybackRate;
     utterance.pitch = 1.0;
 
-    utterance.onend = () => setIsPlayingAudio(false);
-    utterance.onerror = () => setIsPlayingAudio(false);
+    // Chromium pause bug workaround
+    const heartbeatInterval = setInterval(() => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else if (!window.speechSynthesis.speaking) {
+          clearInterval(heartbeatInterval);
+        }
+      }
+    }, 12000);
+
+    utterance.onend = () => {
+      clearInterval(heartbeatInterval);
+      setIsPlayingAudio(false);
+      setIsAudioPaused(false);
+      setIsAudioPlayerActive(false);
+    };
+
+    utterance.onerror = () => {
+      clearInterval(heartbeatInterval);
+      setIsPlayingAudio(false);
+      setIsAudioPaused(false);
+    };
 
     window.speechSynthesis.speak(utterance);
     setIsPlayingAudio(true);
-    showToast('Playing morning audio briefing');
+    setIsAudioPaused(false);
+    setIsAudioPlayerActive(true);
+    setCurrentSpeakingArticle(topStories[0]?.title || 'Morning Audio Briefing');
+    showToast('Playing synthesized morning audio briefing');
+  };
+
+  const handleStopAudio = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingAudio(false);
+    setIsAudioPaused(false);
+    setIsAudioPlayerActive(false);
+    showToast('Audio briefing stopped');
+  };
+
+  const handleChangeAudioRate = (rate: number) => {
+    setAudioPlaybackRate(rate);
+    showToast(`Audio speed set to ${rate}x`);
   };
 
   // Contextual Print execution
@@ -906,7 +990,9 @@ export default function DaymarkBroadsheetPage() {
           onSaveCurrentEdition={handleSaveTodayEdition}
           savedEditionsCount={savedEditions.length}
           isPlayingAudio={isPlayingAudio}
+          isAudioPaused={isAudioPaused}
           onToggleAudio={handleToggleAudio}
+          onOpenChatbot={() => setIsChatbotOpen(true)}
           onOpenGeminiKey={() => {
             setSettingsInitialTab('ai');
             openSettings();
@@ -1086,10 +1172,22 @@ export default function DaymarkBroadsheetPage() {
                   <div className="flex items-center space-x-2">
                     <button
                       type="button"
+                      onClick={() => setIsChatbotOpen(true)}
+                      className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[var(--bg-surface-elevated)] hover:bg-[var(--bg-surface-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)] text-xs font-sans font-medium transition-colors cursor-pointer"
+                      title="Ask questions to Gemini AI about today's news edition"
+                      id="btn-ask-gemini-executive"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                      <span>Ask AI</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={handleSynthesizeWithGemini}
                       disabled={isAiTakeawaysLoading}
                       className="flex items-center space-x-1 px-2.5 py-1 rounded bg-[var(--accent-subtle)] hover:opacity-90 text-[var(--accent-text)] border border-[var(--accent-border)] text-xs font-sans font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                      title={hasGeminiKey ? 'Synthesize with Google Gemini 1.5 Flash' : 'Configure Free Gemini AI Key'}
+                      title="Synthesize today's morning news with Google Gemini AI"
+                      id="btn-synthesize-gemini"
                     >
                       <Sparkles className={`w-3.5 h-3.5 text-[var(--accent-primary)] ${isAiTakeawaysLoading ? 'animate-spin' : ''}`} />
                       <span>{isAiTakeawaysLoading ? 'Synthesizing...' : aiTakeaways ? 'Regenerate with Gemini' : 'Synthesize with Gemini AI'}</span>
@@ -1101,6 +1199,23 @@ export default function DaymarkBroadsheetPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Optional AI Executive Summary Paragraph */}
+                {aiExecutiveSummary && (
+                  <div className="mb-4 p-3.5 rounded-lg bg-[var(--accent-subtle)] border border-[var(--accent-border)] text-xs sm:text-sm font-serif text-[var(--text-primary)] leading-relaxed flex items-start space-x-3">
+                    <Sparkles className="w-4 h-4 text-[var(--accent-primary)] shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-sans font-bold text-[10px] uppercase tracking-wider text-[var(--accent-primary)]">
+                          Gemini Broadsheet Synthesis
+                        </span>
+                        <span className="text-[var(--text-muted)] text-[10px]">•</span>
+                        <span className="font-mono text-[10px] text-[var(--text-muted)]">Verified Multi-Source Wire</span>
+                      </div>
+                      <p>{aiExecutiveSummary}</p>
+                    </div>
+                  </div>
+                )}
 
                 <h2 className={`${headlineFontClass} text-2xl font-bold text-[var(--text-primary)] mb-4`}>
                   Today&apos;s 3 Key Takeaways
@@ -1597,17 +1712,42 @@ export default function DaymarkBroadsheetPage() {
 
       {/* Sticky Audio Briefing Player Bar */}
       <StickyAudioPlayer
+        isOpen={isAudioPlayerActive}
         isPlaying={isPlayingAudio}
         onTogglePlay={handleToggleAudio}
-        onStop={() => {
-          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-          }
-          setIsPlayingAudio(false);
-        }}
-        currentStoryTitle={rankedArticles[0]?.title || 'Morning Audio Briefing'}
-        sourceName={rankedArticles[0]?.source.name || 'DAYMARK Audio Wire'}
+        onStop={handleStopAudio}
+        playbackRate={audioPlaybackRate}
+        onChangeRate={handleChangeAudioRate}
+        currentStoryTitle={currentSpeakingArticle}
+        sourceName="Gemini Audio Wire"
       />
+
+      {/* Gemini AI News Intelligence Chatbot */}
+      <NewsChatbot
+        isOpen={isChatbotOpen}
+        onClose={() => setIsChatbotOpen(false)}
+        articles={rankedArticles}
+        preferences={preferences}
+        onShowToast={showToast}
+        onSelectArticle={(art) => setReadingArticle(art as ScoredArticle)}
+      />
+
+      {/* Floating Ask Gemini AI Launcher Button */}
+      {!isChatbotOpen && (
+        <button
+          type="button"
+          onClick={() => setIsChatbotOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center space-x-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-[#526BFF] to-[#3B54E6] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20 group no-print"
+          id="btn-floating-ask-ai"
+          title="Open Daymark Gemini AI News Intelligence Desk"
+        >
+          <div className="relative">
+            <Sparkles className="w-5 h-5 text-white animate-pulse" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0D1B2C]" />
+          </div>
+          <span className="font-sans font-semibold text-xs tracking-wide">Ask Gemini AI</span>
+        </button>
+      )}
 
       {/* Distraction-Free Editorial Article Reader Modal */}
       <ArticleReaderModal

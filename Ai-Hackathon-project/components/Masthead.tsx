@@ -49,7 +49,9 @@ export interface MastheadProps {
   onSaveCurrentEdition: () => void;
   savedEditionsCount: number;
   isPlayingAudio?: boolean;
+  isAudioPaused?: boolean;
   onToggleAudio?: () => void;
+  onOpenChatbot?: () => void;
   onOpenGeminiKey?: () => void;
   hasGeminiKey?: boolean;
   onOpenSettings?: () => void;
@@ -74,7 +76,9 @@ export default function Masthead({
   onSaveCurrentEdition,
   savedEditionsCount,
   isPlayingAudio = false,
+  isAudioPaused = false,
   onToggleAudio,
+  onOpenChatbot,
   onOpenGeminiKey,
   hasGeminiKey = false,
   onOpenSettings,
@@ -350,6 +354,20 @@ export default function Masthead({
               <span className="hidden sm:inline">Directory</span>
             </Link>
 
+            {/* Ask AI News Chatbot Button */}
+            {onOpenChatbot && (
+              <button
+                type="button"
+                id="btn-masthead-ask-ai"
+                onClick={onOpenChatbot}
+                className={utilityControlClass}
+                title="Ask Gemini News Intelligence Agent about today's stories"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
+                <span className="hidden sm:inline">Ask AI</span>
+              </button>
+            )}
+
             {/* Audio Briefing Button (if supported) */}
             {onToggleAudio && (
               <button
@@ -359,16 +377,28 @@ export default function Masthead({
                 className={`inline-flex items-center justify-center gap-1.5 h-7 px-2 sm:px-2.5 rounded-md border text-xs font-sans font-medium transition-all cursor-pointer shadow-xs ${
                   isPlayingAudio
                     ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] font-semibold'
+                    : isAudioPaused
+                    ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 font-semibold'
                     : 'bg-[var(--bg-surface-elevated)] hover:bg-[var(--bg-surface-subtle)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                 }`}
-                title={isPlayingAudio ? 'Pause Audio Briefing' : 'Play Spoken Morning Audio Briefing (Web Speech API)'}
+                title={
+                  isPlayingAudio
+                    ? 'Pause Audio Briefing'
+                    : isAudioPaused
+                    ? 'Resume Audio Briefing'
+                    : 'Play Spoken Morning Audio Briefing (Web Speech API)'
+                }
               >
                 {isPlayingAudio ? (
-                  <VolumeX className="w-3.5 h-3.5 text-white shrink-0 animate-pulse" />
+                  <Volume2 className="w-3.5 h-3.5 text-white shrink-0 animate-pulse" />
+                ) : isAudioPaused ? (
+                  <VolumeX className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 ) : (
                   <Volume2 className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
                 )}
-                <span className="hidden sm:inline">{isPlayingAudio ? 'Listening...' : 'Audio Brief'}</span>
+                <span className="hidden sm:inline">
+                  {isPlayingAudio ? 'Listening...' : isAudioPaused ? 'Resume Brief' : 'Audio Brief'}
+                </span>
               </button>
             )}
 

@@ -64,37 +64,90 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+function upgradeImageUrl(url: string): string {
+  if (!url) return url;
+
+  // 1. Upgrade NYT images:
+  // NYT feeds often serve mediumSquareAt3X (tight square crop) or low-res thumbnails like mThumb/thumbStandard.
+  // Upgrading them to threeByTwoMediumAt2X gives a high-resolution, uncropped 3:2 landscape editorial photo.
+  if (url.includes('nytimes.com')) {
+    url = url
+      .replace(/-mediumSquareAt3X\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
+      .replace(/-mThumb\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
+      .replace(/-thumbStandard\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
+      .replace(/-thumbLarge\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
+      .replace(/-mediumThreeByTwo210\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1')
+      .replace(/-articleLarge\.(jpg|jpeg|png|webp)/i, '-threeByTwoMediumAt2X.$1');
+  }
+
+  // 2. Upgrade BBC thumbnail URLs:
+  // BBC feeds produce URLs like:
+  // https://ichef.bbci.co.uk/news/240/cpsprodpb/...
+  // https://ichef.bbci.co.uk/ace/standard/240/...
+  // Upgrading to 1024 provides razor-sharp, high-fidelity photos.
+  if (url.includes('bbci.co.uk')) {
+    url = url
+      .replace(/\/news\/(?:144|240|320|480|640|800)\//, '/news/1024/')
+      .replace(/\/ace\/(?:standard|ws)\/(?:144|240|320|480|640)\//, '/ace/standard/1024/');
+  }
+
+  return url;
+}
+
 function extractImage(item: any): string | undefined {
+  let foundUrl: string | undefined;
+
   // 1. Check media:content (could be array or single object)
   const mediaContent = item['media:content'];
   if (Array.isArray(mediaContent)) {
-    const img = mediaContent.find((m) => m['@_medium'] === 'image' || m['@_url']);
-    if (img && img['@_url']) return img['@_url'];
+    // Sort by largest width first to pick highest quality
+    const sorted = [...mediaContent].sort((a, b) => {
+      const wa = parseInt(a['@_width'] || '0', 10);
+      const wb = parseInt(b['@_width'] || '0', 10);
+      return wb - wa;
+    });
+    const img = sorted.find((m) => m['@_medium'] === 'image' || m['@_url']);
+    if (img && img['@_url']) foundUrl = img['@_url'];
   } else if (mediaContent && mediaContent['@_url']) {
-    return mediaContent['@_url'];
+    foundUrl = mediaContent['@_url'];
   }
 
   // 2. Check media:thumbnail
-  const mediaThumb = item['media:thumbnail'];
-  if (Array.isArray(mediaThumb)) {
-    if (mediaThumb[0] && mediaThumb[0]['@_url']) return mediaThumb[0]['@_url'];
-  } else if (mediaThumb && mediaThumb['@_url']) {
-    return mediaThumb['@_url'];
+  if (!foundUrl) {
+    const mediaThumb = item['media:thumbnail'];
+    if (Array.isArray(mediaThumb)) {
+      const sorted = [...mediaThumb].sort((a, b) => {
+        const wa = parseInt(a['@_width'] || '0', 10);
+        const wb = parseInt(b['@_width'] || '0', 10);
+        return wb - wa;
+      });
+      if (sorted[0] && sorted[0]['@_url']) foundUrl = sorted[0]['@_url'];
+    } else if (mediaThumb && mediaThumb['@_url']) {
+      foundUrl = mediaThumb['@_url'];
+    }
   }
 
   // 3. Check enclosure
-  const enclosure = item.enclosure;
-  if (enclosure && enclosure['@_url'] && enclosure['@_type']?.startsWith('image/')) {
-    return enclosure['@_url'];
+  if (!foundUrl) {
+    const enclosure = item.enclosure;
+    if (enclosure && enclosure['@_url'] && enclosure['@_type']?.startsWith('image/')) {
+      foundUrl = enclosure['@_url'];
+    }
   }
 
   // 4. Check HTML in description or content:encoded
-  const htmlContent = item['content:encoded'] || item.description || '';
-  if (typeof htmlContent === 'string') {
-    const match = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-    if (match && match[1]) {
-      return match[1];
+  if (!foundUrl) {
+    const htmlContent = item['content:encoded'] || item.description || '';
+    if (typeof htmlContent === 'string') {
+      const match = htmlContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (match && match[1]) {
+        foundUrl = match[1];
+      }
     }
+  }
+
+  if (foundUrl) {
+    return upgradeImageUrl(foundUrl);
   }
 
   return undefined;
