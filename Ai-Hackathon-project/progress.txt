@@ -289,3 +289,13 @@ N. Contextual Per-Magazine Print Buttons & Selective Broadsheet Export:
        suppressing unrelated sections.
      * When full broadsheet is selected, exports the complete multi-section edition.
    - Verified via browser subagent with interactive testing, screenshot capture, and recording.
+   - Direct Print Trigger & Headline Visibility Engine Fix:
+     * Fixed critical print rendering bug where global `button { display: none !important; }` in @media print
+       accidentally hid article card headlines (which are wrapped in interactive reader buttons).
+     * Implemented explicit typography styling for `h1 button, h2 button, h3 button, h4 button, [class*="headline"] button`
+       in globals.css so all headlines render with full editorial weight, font sizes, and black ink.
+     * Fixed race condition in PrintPreviewModal where closing the modal synchronously with print confirmation
+       reset selectedPrintMagazine before browser spooling. Implemented 150ms DOM flush delay and 2500ms
+       target retention.
+     * Connected each section's "Print Magazine" button to immediately trigger direct print execution with
+       dynamic document title, browser prompt, and instant toast confirmation.

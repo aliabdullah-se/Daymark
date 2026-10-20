@@ -292,10 +292,11 @@ body {
     font-size: 10pt !important;
   }
 
-  /* Exclude global layout chrome, navigation, buttons, and sidebars */
+  /* Exclude global layout chrome, navigation, utility buttons, and sidebars */
   .no-print,
   header.no-print,
-  button,
+  button.no-print,
+  button:not(h1 button):not(h2 button):not(h3 button):not(h4 button):not([class*="headline"] button),
   .print-hide,
   nav,
   footer,
@@ -303,6 +304,22 @@ body {
   aside.no-print,
   [role="dialog"] {
     display: none !important;
+  }
+
+  /* Ensure headline buttons in article cards print cleanly as typography */
+  h1 button, h2 button, h3 button, h4 button, [class*="headline"] button {
+    display: inline !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    color: #000000 !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+    text-align: left !important;
+    box-shadow: none !important;
+    cursor: default !important;
   }
 
   /* Allow specific print modals if needed or keep hidden */

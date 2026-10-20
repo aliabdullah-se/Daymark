@@ -453,6 +453,36 @@ export default function DaymarkBroadsheetPage() {
     [rankedArticles, leadArticle]
   );
 
+  // Contextual Print Execution Engine
+  const executePrint = useCallback(
+    (specificTarget?: { id: string; title: string; sectionCode?: string; articles: (ScoredArticle | Article)[] } | null) => {
+      if (typeof window === 'undefined') return;
+
+      const target = specificTarget !== undefined ? specificTarget : selectedPrintMagazine;
+      setSelectedPrintMagazine(target);
+      setIsPrintModalOpen(false);
+
+      const titleToUse = target ? target.title : currentEditionMeta.editionName;
+      const originalTitle = document.title;
+      document.title = `DAYMARK - ${titleToUse} - ${currentEditionMeta.date}`;
+
+      // 150ms timeout ensures React renders the print DOM before browser spooling
+      setTimeout(() => {
+        try {
+          window.print();
+        } catch (err) {
+          console.error('Print execution failed:', err);
+        } finally {
+          setTimeout(() => {
+            document.title = originalTitle;
+            setSelectedPrintMagazine(null);
+          }, 2500);
+        }
+      }, 150);
+    },
+    [selectedPrintMagazine, currentEditionMeta]
+  );
+
   // Magazine Print Handlers & Contextual Export Engine
   const handlePrintMagazine = useCallback(
     (title: string, sectionCode: string, articles: (ScoredArticle | Article)[]) => {
@@ -460,15 +490,16 @@ export default function DaymarkBroadsheetPage() {
         showToast('This magazine contains no stories to export');
         return;
       }
-      setSelectedPrintMagazine({
+      const target = {
         id: sectionCode.toLowerCase().replace(/\s+/g, '-'),
         title,
         sectionCode,
         articles,
-      });
-      setIsPrintModalOpen(true);
+      };
+      showToast(`Opening print prompt for ${title}...`);
+      executePrint(target);
     },
-    []
+    [executePrint]
   );
 
   const handleSelectMagazineToPrint = useCallback(
@@ -541,15 +572,19 @@ export default function DaymarkBroadsheetPage() {
     [rankedArticles, leadArticle, secondaryArticles, wireBriefs, techArticles, worldArticles, businessArticles, scienceArticles, otherArticles]
   );
 
-  const handlePrintSavedEdition = useCallback((edition: SavedEdition) => {
-    setSelectedPrintMagazine({
-      id: edition.id,
-      title: `${edition.title || 'DAYMARK'} (${edition.dateStr})`,
-      sectionCode: 'ARCHIVAL ISSUE',
-      articles: edition.articles,
-    });
-    setIsPrintModalOpen(true);
-  }, []);
+  const handlePrintSavedEdition = useCallback(
+    (edition: SavedEdition) => {
+      const target = {
+        id: edition.id,
+        title: `${edition.title || 'DAYMARK'} (${edition.dateStr})`,
+        sectionCode: 'ARCHIVAL ISSUE',
+        articles: edition.articles,
+      };
+      showToast(`Opening print prompt for ${target.title}...`);
+      executePrint(target);
+    },
+    [executePrint]
+  );
 
   const handleTriggerEditionPrint = useCallback(() => {
     if (rankedArticles.length === 0) {
@@ -1087,20 +1122,6 @@ export default function DaymarkBroadsheetPage() {
   const handleChangeAudioRate = (rate: number) => {
     setAudioPlaybackRate(rate);
     showToast(`Audio speed set to ${rate}x`);
-  };
-
-  // Contextual Print execution
-  const executePrint = () => {
-    if (typeof window === 'undefined') return;
-    const originalTitle = document.title;
-    const titleToUse = selectedPrintMagazine ? selectedPrintMagazine.title : currentEditionMeta.editionName;
-    // Set document title so browser's "Save as PDF" suggests a clean edition-specific filename
-    document.title = `DAYMARK - ${titleToUse} - ${currentEditionMeta.date}`;
-    window.print();
-    // Restore title after print dialog closes
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 1500);
   };
 
   // Dynamic layout & width calculation from settings

@@ -124,10 +124,7 @@ export default function PrintPreviewModal({
           <button
             id="confirm-print-action"
             type="button"
-            onClick={() => {
-              onConfirmPrint();
-              onClose();
-            }}
+            onClick={onConfirmPrint}
             className="px-5 py-2 bg-[var(--accent-primary)] hover:opacity-90 text-white rounded text-xs font-sans font-bold shadow-xs flex items-center space-x-1.5 transition-opacity cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
